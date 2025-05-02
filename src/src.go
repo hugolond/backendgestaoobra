@@ -462,6 +462,7 @@ func ListObra(c *gin.Context) {
 	dados, err := pkg.GetAllObra()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar dados da obra"})
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra - Error:" + err.Error())
 		return
 	}
 
