@@ -73,8 +73,8 @@ func InsertObra(data string, nome string, endereco string, bairro string, area s
 	defer conn.Close()
 
 	sqlStatement :=
-		`INSERT INTO obra.cadastroobra ("createdDate","nome","endereco","bairro","area","tipo","casagerminada")
-		VALUES ($1,$2,$3,$4,$5,$6,$7)`
+		`INSERT INTO obra.cadastroobra ("createdDate","nome","endereco","bairro","area","tipo","casagerminada","status")
+		VALUES ($1,$2,$3,$4,$5,$6,$7,true)`
 
 	conn.QueryRow(sqlStatement, data, nome, endereco, bairro, area, tipo, casagerminada)
 	if err != nil {
