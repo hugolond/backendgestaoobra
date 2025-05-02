@@ -10,6 +10,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type Obra struct {
+	sequence      int
+	nome          string
+	endereco      string
+	bairro        string
+	area          string
+	tipo          int
+	casagerminada string
+	status        bool
+}
+
 func OpenConn() (*sql.DB, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -80,4 +91,32 @@ func InsertObra(data string, nome string, endereco string, bairro string, area s
 	if err != nil {
 		panic(err)
 	}
+}
+
+func GetAllObra() ([]Obra, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	sqlStatement :=
+		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c ORDER BY sequence ASC`
+
+	rows, err := conn.Query(sqlStatement)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var obras []Obra
+	for rows.Next() {
+		var u Obra
+		if err := rows.Scan(&u.sequence, &u.nome, &u.endereco, &u.bairro, &u.area, &u.tipo, &u.casagerminada, &u.status); err != nil {
+			return nil, err
+		}
+		obras = append(obras, u)
+	}
+
+	return obras, nil
 }

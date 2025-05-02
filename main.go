@@ -46,8 +46,9 @@ func main() {
 
 	router.GET("/healthz", src.Healthz)
 
-	//Order
+	//Obra
 	router.POST("/api/obra/v1/sendnewobra", src.CadastraObra) //GE 1
+	router.GET("/api/obra/v1/listObra", src.ListObra)         //GE 1
 
 	// Carrinho Abandonado
 	router.POST("/api/carrinho/v1/rcvarejo", src.RcVarejo) // CA1
