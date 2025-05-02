@@ -16,7 +16,7 @@ type Obra struct {
 	endereco      string
 	bairro        string
 	area          string
-	tipo          int
+	tipo          string
 	casagerminada bool
 	status        bool
 }
