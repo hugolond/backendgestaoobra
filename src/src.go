@@ -456,16 +456,8 @@ func CadastraObra(c *gin.Context) {
 }
 
 func ListObra(c *gin.Context) {
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(c.Request.Body)
-	obra := Obra{}
-	err := json.Unmarshal(buf.Bytes(), &obra)
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
 	currentTime := time.Now()
-	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra: ")
+	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra")
 	dados, err := pkg.GetAllObra()
 	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", "All", "Nome", "backendgestaoobra", "Consulta Realizada com sucesso!", "")
 	if err != nil {

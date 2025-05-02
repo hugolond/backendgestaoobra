@@ -102,8 +102,36 @@ func GetAllObra() ([]Obra, error) {
 
 	sqlStatement :=
 		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c ORDER BY sequence ASC`
-
 	rows, err := conn.Query(sqlStatement)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	currentTime := time.Now()
+	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta realiza")
+	var obras []Obra
+	for rows.Next() {
+		var u Obra
+		if err := rows.Scan(&u.sequence, &u.nome, &u.endereco, &u.bairro, &u.area, &u.tipo, &u.casagerminada, &u.status); err != nil {
+			return nil, err
+		}
+		obras = append(obras, u)
+	}
+	return obras, nil
+}
+
+/*
+func GetObraId(id string) ([]Obra, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	sqlStatement :=
+		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c where c.sequence = '$1' ORDER BY sequence ASC`
+
+	rows, err := conn.QueryRow(sqlStatement , id)
 	if err != nil {
 		panic(err)
 	}
@@ -120,3 +148,4 @@ func GetAllObra() ([]Obra, error) {
 
 	return obras, nil
 }
+*/
