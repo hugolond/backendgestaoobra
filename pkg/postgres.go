@@ -101,7 +101,7 @@ func GetAllObra() ([]Obra, error) {
 	defer conn.Close()
 
 	sqlStatement :=
-		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c ORDER BY sequence ASC`
+		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c ORDER BY c.sequence ASC`
 	rows, err := conn.Query(sqlStatement)
 	if err != nil {
 		panic(err)
