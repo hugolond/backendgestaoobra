@@ -458,16 +458,24 @@ func CadastraObra(c *gin.Context) {
 func ListObra(c *gin.Context) {
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra")
+
 	dados, err := pkg.GetAllObra()
-	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", "All", "Nome", "backendgestaoobra", "Consulta Realizada com sucesso!", "")
 	if err != nil {
-		log.Fatalf("Erro ao gravar log")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar dados da obra"})
+		return
 	}
-	if len(dados) > 0 {
-		c.JSON(200, dados)
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Erro ao consulta lista de obras"})
-	}
+
+	pkg.InsertLog(
+		time.Now().Format("2006-01-02 15:04:05"),
+		"OBRA",
+		"All",
+		"Nome",
+		"backendgestaoobra",
+		"Consulta realizada com sucesso!",
+		"",
+	)
+
+	c.JSON(http.StatusOK, dados)
 }
 
 func GetSaldo(c *gin.Context) {
