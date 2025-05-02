@@ -17,7 +17,7 @@ type Obra struct {
 	bairro        string
 	area          string
 	tipo          int
-	casagerminada string
+	casagerminada bool
 	status        bool
 }
 
@@ -108,13 +108,14 @@ func GetAllObra() ([]Obra, error) {
 	}
 	defer rows.Close()
 	currentTime := time.Now()
-	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta realiza")
+	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta realizada")
 	var obras []Obra
 	for rows.Next() {
 		var u Obra
 		if err := rows.Scan(&u.sequence, &u.nome, &u.endereco, &u.bairro, &u.area, &u.tipo, &u.casagerminada, &u.status); err != nil {
 			return nil, err
 		}
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta realizada : " + u.nome)
 		obras = append(obras, u)
 	}
 	return obras, nil
