@@ -11,14 +11,14 @@ import (
 )
 
 type Obra struct {
-	sequence      int
-	nome          string
-	endereco      string
-	bairro        string
-	area          string
-	tipo          string
-	casagerminada bool
-	status        bool
+	Sequence      int
+	Nome          string
+	Endereco      string
+	Bairro        string
+	Area          string
+	Tipo          string
+	Casagerminada bool
+	Status        bool
 }
 
 func OpenConn() (*sql.DB, error) {
@@ -96,28 +96,31 @@ func InsertObra(data string, nome string, endereco string, bairro string, area s
 func GetAllObra() ([]Obra, error) {
 	conn, err := OpenConn()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
 	}
 	defer conn.Close()
 
-	sqlStatement :=
-		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c ORDER BY c.sequence ASC`
+	sqlStatement := `
+		SELECT c.sequence, c.nome, c.endereco, c.bairro, c.area, c.tipo, c.casagerminada, c.status 
+		FROM obra.cadastroobra c 
+		ORDER BY c.sequence ASC`
+
 	rows, err := conn.Query(sqlStatement)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("erro ao executar query: %w", err)
 	}
 	defer rows.Close()
-	currentTime := time.Now()
-	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta realizada")
+
 	var obras []Obra
 	for rows.Next() {
 		var u Obra
-		if err := rows.Scan(&u.sequence, &u.nome, &u.endereco, &u.bairro, &u.area, &u.tipo, &u.casagerminada, &u.status); err != nil {
-			return nil, err
+		err := rows.Scan(&u.Sequence, &u.Nome, &u.Endereco, &u.Bairro, &u.Area, &u.Tipo, &u.Casagerminada, &u.Status)
+		if err != nil {
+			return nil, fmt.Errorf("erro ao ler linha: %w", err)
 		}
-		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta realizada : " + u.nome)
 		obras = append(obras, u)
 	}
+
 	return obras, nil
 }
 
