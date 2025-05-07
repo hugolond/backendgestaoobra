@@ -608,6 +608,22 @@ func AtualizaPagamento(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Pagamento atualizado com sucesso!"})
 }
 
+func DeletePagamento(c *gin.Context) {
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID do pagamento não informado"})
+		return
+	}
+	err := pkg.DeletePagamento(id)
+	if err != nil {
+		log.Println("Erro ao excluir pagamento:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao excluir pagamento"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Pagamento excluído com sucesso"})
+}
+
 func GetSaldo(c *gin.Context) {
 	/*body := new(ConsultaSaldoPickup)
 	if err := c.Bind(body); err != nil {

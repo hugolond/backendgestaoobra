@@ -51,6 +51,7 @@ func main() {
 	router.POST("/api/payment/v1/sendnewpayment", src.CadastraPagamento) //GE 1
 	router.GET("/api/payment/v1/listpayment", src.ListPagamentoPorObra)  //GE 1
 	router.PUT("/api/payment/v1/update", src.AtualizaPagamento)          // PG 3
+	router.DELETE("/api/payment/v1/delete", src.DeletePagamento)
 
 	// Carrinho Abandonado
 	router.POST("/api/carrinho/v1/rcvarejo", src.RcVarejo) // CA1

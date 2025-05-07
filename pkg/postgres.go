@@ -238,6 +238,22 @@ func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
 	return pagamentos, nil
 }
 
+func DeletePagamento(id string) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	sqlStatement := `DELETE FROM obra.pagamento WHERE id = $1`
+	_, err = conn.Exec(sqlStatement, id)
+	if err != nil {
+		return fmt.Errorf("erro ao excluir pagamento: %w", err)
+	}
+
+	return nil
+}
+
 func UpdateObra(obra Obra) error {
 	conn, err := OpenConn()
 	if err != nil {
