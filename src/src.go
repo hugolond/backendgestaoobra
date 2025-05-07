@@ -3,6 +3,7 @@ package src
 import (
 	"backendgestaoobra/config"
 	"backendgestaoobra/pkg"
+
 	"backendgestaoobra/queue"
 	"bytes"
 	"encoding/csv"
@@ -445,15 +446,26 @@ func RcVarejo(c *gin.Context) {
 func CadastraObra(c *gin.Context) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(c.Request.Body)
-	obra := pkg.Obra{}
+	obra := Obra{}
 	err := json.Unmarshal(buf.Bytes(), &obra)
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
+	obra2 := pkg.Obra{}
+	obra2.Nome = obra.Nome
+	obra2.Endereco = obra.Endereco
+	obra2.Bairro = obra.Bairro
+	obra2.Area = obra.Area
+	obra2.Tipo = obra.Tipo
+	obra2.Casagerminada = obra.Casagerminada
+	obra2.Status = obra.Status
+	obra2.DataInicioObra = obra.DataInicioObra
+	obra2.DataFinalObra = obra.DataFinalObra
+
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Insert dados obra: " + obra.Nome)
-	pkg.InsertObra(obra)
+	pkg.InsertObra(obra2)
 	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", obra.Nome, "nome", "backendgestaoobra", "Obra registrada com sucesso!", "")
 	c.JSON(http.StatusOK, gin.H{"message": "Obra cadastrada com sucesso!"})
 }

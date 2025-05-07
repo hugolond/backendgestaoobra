@@ -88,7 +88,7 @@ func InsertObra(obra Obra) (string, error) {
 	defer conn.Close()
 
 	sqlStatement := `
-		INSERT INTO obra (
+		INSERT INTO obra.cadastroobra (
 			"nome", "endereco", "bairro", "area", "tipo", "casagerminada", "status", "data_inicio_obra", "data_final_obra"
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -123,7 +123,7 @@ func GetAllObra() ([]Obra, error) {
 
 	sqlStatement := `
 		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra
-		FROM obra
+		FROM obra.cadastroobra
 		ORDER BY data_inicio_obra DESC`
 
 	rows, err := conn.Query(sqlStatement)
@@ -171,7 +171,7 @@ func InsertPagamento(idObra string, dataPagamento string, detalhe string, catego
 	}
 
 	sqlStatement := `
-		INSERT INTO pagamento ("idObra", "data_do_pagamento", "detalhe", "categoria", "valor", "observacao")
+		INSERT INTO obra.pagamento ("idObra", "data_do_pagamento", "detalhe", "categoria", "valor", "observacao")
 		VALUES ($1, $2, $3, $4, $5, $6)`
 
 	_, err = conn.Exec(sqlStatement, idObra, dataPagamento, detalhe, categoria, valor, observacao)
