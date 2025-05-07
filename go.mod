@@ -1,4 +1,4 @@
-module web-server-pnb
+module backendgestaoobra
 
 go 1.20
 

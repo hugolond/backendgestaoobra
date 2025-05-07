@@ -1,16 +1,16 @@
 package main
 
 import (
+	"backendgestaoobra/config"
+	"backendgestaoobra/pkg"
+	"backendgestaoobra/queue"
+	"backendgestaoobra/src"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"time"
-	"web-server-pnb/config"
-	"web-server-pnb/pkg"
-	"web-server-pnb/queue"
-	"web-server-pnb/src"
 
 	"github.com/gin-gonic/gin"
 )

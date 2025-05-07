@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -11,14 +13,16 @@ import (
 )
 
 type Obra struct {
-	Sequence      int
-	Nome          string
-	Endereco      string
-	Bairro        string
-	Area          string
-	Tipo          string
-	Casagerminada bool
-	Status        bool
+	ID             string // Usado apenas se quiser armazenar o retorno
+	Nome           string
+	Endereco       string
+	Bairro         string
+	Area           string
+	Tipo           int
+	Casagerminada  bool
+	Status         bool
+	DataInicioObra string // ou time.Time, dependendo da necessidade
+	DataFinalObra  string // idem
 }
 
 func OpenConn() (*sql.DB, error) {
@@ -76,21 +80,38 @@ func InsertCarrinho(data string, document string, phone string, documentType str
 	}
 }
 
-func InsertObra(data string, nome string, endereco string, bairro string, area string, tipo int, casagerminada bool) {
+func InsertObra(obra Obra) (string, error) {
 	conn, err := OpenConn()
 	if err != nil {
-		return
+		return "", fmt.Errorf("erro ao abrir conexão: %w", err)
 	}
 	defer conn.Close()
 
-	sqlStatement :=
-		`INSERT INTO obra.cadastroobra ("createdDate","nome","endereco","bairro","area","tipo","casagerminada","status")
-		VALUES ($1,$2,$3,$4,$5,$6,$7,true)`
+	sqlStatement := `
+		INSERT INTO obra (
+			"nome", "endereco", "bairro", "area", "tipo", "casagerminada", "status", "data_inicio_obra", "data_final_obra"
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING idObra`
 
-	conn.QueryRow(sqlStatement, data, nome, endereco, bairro, area, tipo, casagerminada)
+	var idObra string
+	err = conn.QueryRow(sqlStatement,
+		obra.Nome,
+		obra.Endereco,
+		obra.Bairro,
+		obra.Area,
+		obra.Tipo,
+		obra.Casagerminada,
+		obra.Status,
+		obra.DataInicioObra,
+		obra.DataFinalObra,
+	).Scan(&idObra)
+
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("erro ao inserir obra: %w", err)
 	}
+
+	return idObra, nil
 }
 
 func GetAllObra() ([]Obra, error) {
@@ -101,9 +122,9 @@ func GetAllObra() ([]Obra, error) {
 	defer conn.Close()
 
 	sqlStatement := `
-		SELECT c.sequence, c.nome, c.endereco, c.bairro, c.area, c.tipo, c.casagerminada, c.status 
-		FROM obra.cadastroobra c 
-		ORDER BY c.sequence ASC`
+		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra
+		FROM obra
+		ORDER BY data_inicio_obra DESC`
 
 	rows, err := conn.Query(sqlStatement)
 	if err != nil {
@@ -114,7 +135,18 @@ func GetAllObra() ([]Obra, error) {
 	var obras []Obra
 	for rows.Next() {
 		var u Obra
-		err := rows.Scan(&u.Sequence, &u.Nome, &u.Endereco, &u.Bairro, &u.Area, &u.Tipo, &u.Casagerminada, &u.Status)
+		err := rows.Scan(
+			&u.ID,
+			&u.Nome,
+			&u.Endereco,
+			&u.Bairro,
+			&u.Area,
+			&u.Tipo,
+			&u.Casagerminada,
+			&u.Status,
+			&u.DataInicioObra,
+			&u.DataFinalObra,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao ler linha: %w", err)
 		}
@@ -124,32 +156,26 @@ func GetAllObra() ([]Obra, error) {
 	return obras, nil
 }
 
-/*
-func GetObraId(id string) ([]Obra, error) {
+func InsertPagamento(idObra string, dataPagamento string, detalhe string, categoria string, valorStr string, observacao string) {
 	conn, err := OpenConn()
 	if err != nil {
-		return nil, err
+		return
 	}
 	defer conn.Close()
 
-	sqlStatement :=
-		`SELECT c.sequence , c.nome , c.endereco , c.bairro , c.area , c.tipo , c.casagerminada , c.status FROM obra.cadastroobra c where c.sequence = '$1' ORDER BY sequence ASC`
-
-	rows, err := conn.QueryRow(sqlStatement , id)
+	// Converte valor string "123,22" para float64
+	valorStr = strings.Replace(valorStr, ",", ".", 1)
+	valor, err := strconv.ParseFloat(valorStr, 64)
 	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-
-	var obras []Obra
-	for rows.Next() {
-		var u Obra
-		if err := rows.Scan(&u.sequence, &u.nome, &u.endereco, &u.bairro, &u.area, &u.tipo, &u.casagerminada, &u.status); err != nil {
-			return nil, err
-		}
-		obras = append(obras, u)
+		panic(fmt.Sprintf("Erro ao converter valor: %v", err))
 	}
 
-	return obras, nil
+	sqlStatement := `
+		INSERT INTO pagamento ("idObra", "data_do_pagamento", "detalhe", "categoria", "valor", "observacao")
+		VALUES ($1, $2, $3, $4, $5, $6)`
+
+	_, err = conn.Exec(sqlStatement, idObra, dataPagamento, detalhe, categoria, valor, observacao)
+	if err != nil {
+		panic(fmt.Sprintf("Erro ao inserir pagamento: %v", err))
+	}
 }
-*/

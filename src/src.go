@@ -1,6 +1,9 @@
 package src
 
 import (
+	"backendgestaoobra/config"
+	"backendgestaoobra/pkg"
+	"backendgestaoobra/queue"
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
@@ -14,9 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"web-server-pnb/config"
-	"web-server-pnb/pkg"
-	"web-server-pnb/queue"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,13 +52,16 @@ type Frequencia struct {
 }
 
 type Obra struct {
-	CreatedDate   string `json:"createdDate"`
-	Nome          string `json:"nome"`
-	Endereco      string `json:"endereco"`
-	Bairro        string `json:"bairro"`
-	Area          string `json:"area"`
-	Tipo          int    `json:"tipo"`
-	Casagerminada bool   `json:"casagerminada"`
+	ID             string // Usado apenas se quiser armazenar o retorno
+	Nome           string `json:"nome"`
+	Endereco       string `json:"endereco"`
+	Bairro         string `json:"bairro"`
+	Area           string `json:"area"`
+	Tipo           int    `json:"tipo"`
+	Casagerminada  bool   `json:"casagerminada"`
+	Status         bool   `json:"status"`
+	DataInicioObra string `json:"datainicioobra"` // ou time.Time, dependendo da necessidade
+	DataFinalObra  string `json:"datafinalobra"`  // idem
 }
 
 type RcCarrinho struct {
@@ -442,7 +445,7 @@ func RcVarejo(c *gin.Context) {
 func CadastraObra(c *gin.Context) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(c.Request.Body)
-	obra := Obra{}
+	obra := pkg.Obra{}
 	err := json.Unmarshal(buf.Bytes(), &obra)
 	if err != nil {
 		log.Println(err.Error())
@@ -450,7 +453,7 @@ func CadastraObra(c *gin.Context) {
 	}
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Insert dados obra: " + obra.Nome)
-	pkg.InsertObra(time.Now().Format("2006-01-02 15:04:05"), obra.Nome, obra.Endereco, obra.Bairro, obra.Area, obra.Tipo, obra.Casagerminada)
+	pkg.InsertObra(obra)
 	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", obra.Nome, "nome", "backendgestaoobra", "Obra registrada com sucesso!", "")
 	c.JSON(http.StatusOK, gin.H{"message": "Obra cadastrada com sucesso!"})
 }

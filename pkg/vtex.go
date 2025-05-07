@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"backendgestaoobra/config"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"web-server-pnb/config"
 )
 
 type GetTokenVtex struct {
