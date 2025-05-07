@@ -97,10 +97,10 @@ func InsertObra(obra Obra) (string, error) {
 
 	sqlStatement := `
 		INSERT INTO obra.cadastroobra (
-			"nome", "endereco", "bairro", "area", "tipo", "casagerminada", "status", "data_inicio_obra", "data_final_obra"
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING idObra`
+			nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()
+		) RETURNING idObra`
 
 	var idObra string
 	err = conn.QueryRow(sqlStatement,
@@ -173,13 +173,10 @@ func InsertPagamentoStruct(p Pagamento) error {
 
 	sqlStatement := `
 		INSERT INTO obra.pagamento (
-			idObra,
-			data_do_pagamento,
-			detalhe,
-			categoria,
-			valor,
-			observacao
-		) VALUES ($1, $2, $3, $4, $5, $6)`
+			idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, now(), now()
+		)`
 
 	_, err = conn.Exec(sqlStatement,
 		p.IDObra,
@@ -250,7 +247,8 @@ func UpdateObra(obra Obra) error {
 			casagerminada = $6,
 			status = $7,
 			data_inicio_obra = $8,
-			data_final_obra = $9
+			data_final_obra = $9,
+			updated_at = now()
 		WHERE idObra = $10`
 
 	_, err = conn.Exec(sqlStatement,
@@ -282,7 +280,8 @@ func UpdatePagamento(p Pagamento) error {
 			detalhe = $2,
 			categoria = $3,
 			valor = $4,
-			observacao = $5
+			observacao = $5,
+			updated_at = now()
 		WHERE id = $6`
 
 	_, err = conn.Exec(sqlStatement,

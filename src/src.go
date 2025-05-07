@@ -53,7 +53,7 @@ type Frequencia struct {
 }
 
 type Obra struct {
-	ID             string // Usado apenas se quiser armazenar o retorno
+	ID             string `json:"id,omitempty"`
 	Nome           string `json:"nome"`
 	Endereco       string `json:"endereco"`
 	Bairro         string `json:"bairro"`
@@ -61,18 +61,22 @@ type Obra struct {
 	Tipo           int    `json:"tipo"`
 	Casagerminada  bool   `json:"casagerminada"`
 	Status         bool   `json:"status"`
-	DataInicioObra string `json:"datainicioobra"` // ou time.Time, dependendo da necessidade
-	DataFinalObra  string `json:"datafinalobra"`  // idem
+	DataInicioObra string `json:"datainicioobra"`
+	DataFinalObra  string `json:"datafinalobra"`
+	CreatedAt      string `json:"created_at,omitempty"`
+	UpdatedAt      string `json:"updated_at,omitempty"`
 }
 
 type Pagamento struct {
-	ID            int     `json:"id,omitempty"`
+	ID            int     `json:"id"`
 	IDObra        string  `json:"idobra"`
 	DataPagamento string  `json:"datapagamento"`
 	Detalhe       string  `json:"detalhe"`
 	Categoria     string  `json:"categoria"`
 	Valor         float64 `json:"valor"`
 	Observacao    string  `json:"observacao"`
+	CreatedAt     string  `json:"created_at,omitempty"`
+	UpdatedAt     string  `json:"updated_at,omitempty"`
 }
 
 type RcCarrinho struct {
