@@ -134,7 +134,7 @@ func GetAllObra() ([]Obra, error) {
 	defer conn.Close()
 
 	sqlStatement := `
-		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra
+		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
 		FROM obra.cadastroobra
 		ORDER BY data_inicio_obra DESC`
 
@@ -158,6 +158,8 @@ func GetAllObra() ([]Obra, error) {
 			&u.Status,
 			&u.DataInicioObra,
 			&u.DataFinalObra,
+			&u.CreatedAt,
+			&u.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao ler linha: %w", err)
@@ -202,7 +204,7 @@ func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
 	defer conn.Close()
 
 	sqlStatement := `
-		SELECT id, idObra, data_do_pagamento, detalhe, categoria, valor, observacao
+		SELECT id, idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at
 		FROM obra.pagamento
 		WHERE idObra = $1
 		ORDER BY data_do_pagamento DESC`
@@ -224,6 +226,8 @@ func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
 			&p.Categoria,
 			&p.Valor,
 			&p.Observacao,
+			&p.CreatedAt,
+			&p.UpdatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao ler linha: %w", err)
