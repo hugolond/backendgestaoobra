@@ -484,6 +484,28 @@ func CadastraObra(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Obra cadastrada com sucesso!"})
 }
 
+func GetObraByID(c *gin.Context) {
+	idObra := c.Param("idobra")
+	if idObra == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro 'idobra' é obrigatório"})
+		return
+	}
+
+	obra, err := pkg.GetObraByID(idObra)
+	if err != nil {
+		log.Println("Erro ao consultar obra:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar obra"})
+		return
+	}
+
+	if obra.ID == "" {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Obra não encontrada"})
+		return
+	}
+
+	c.JSON(http.StatusOK, obra)
+}
+
 func ListObra(c *gin.Context) {
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra")

@@ -43,8 +43,9 @@ func main() {
 
 	//Obra
 	router.POST("/api/obra/v1/sendnewobra", src.CadastraObra) //GE 1
-	router.GET("/api/obra/v1/listObra", src.ListObra)         //GE 1
-	router.PUT("/api/obra/v1/update", src.AtualizaObra)
+	router.GET("/api/obra/v1/:idobra", src.GetObraByID)       //GE 1
+	router.GET("/api/obra/v1/listallobra", src.ListObra)      //GE 1
+	router.PUT("/api/obra/v1/update", src.AtualizaObra)       //GE 1
 
 	//Pagamento
 	router.POST("/api/payment/v1/sendnewpayment", src.CadastraPagamento) //GE 1

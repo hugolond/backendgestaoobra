@@ -299,3 +299,41 @@ func UpdatePagamento(p Pagamento) error {
 
 	return err
 }
+
+func GetObraByID(idObra string) (Obra, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return Obra{}, fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
+		FROM obra.cadastroobra
+		WHERE idObra = $1`
+
+	var u Obra
+	err = conn.QueryRow(sqlStatement, idObra).Scan(
+		&u.ID,
+		&u.Nome,
+		&u.Endereco,
+		&u.Bairro,
+		&u.Area,
+		&u.Tipo,
+		&u.Casagerminada,
+		&u.Status,
+		&u.DataInicioObra,
+		&u.DataFinalObra,
+		&u.CreatedAt,
+		&u.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return Obra{}, nil
+		}
+		return Obra{}, fmt.Errorf("erro ao buscar obra: %w", err)
+	}
+
+	return u, nil
+}
