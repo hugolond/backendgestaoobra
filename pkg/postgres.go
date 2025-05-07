@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -23,6 +21,16 @@ type Obra struct {
 	Status         bool
 	DataInicioObra string // ou time.Time, dependendo da necessidade
 	DataFinalObra  string // idem
+}
+
+type Pagamento struct {
+	ID            int     `json:"id,omitempty"`
+	IDObra        string  `json:"idobra"`
+	DataPagamento string  `json:"datapagamento"`
+	Detalhe       string  `json:"detalhe"`
+	Categoria     string  `json:"categoria"`
+	Valor         float64 `json:"valor"`
+	Observacao    string  `json:"observacao"`
 }
 
 func OpenConn() (*sql.DB, error) {
@@ -156,26 +164,71 @@ func GetAllObra() ([]Obra, error) {
 	return obras, nil
 }
 
-func InsertPagamento(idObra string, dataPagamento string, detalhe string, categoria string, valorStr string, observacao string) {
+func InsertPagamentoStruct(p Pagamento) error {
 	conn, err := OpenConn()
 	if err != nil {
-		return
+		return err
 	}
 	defer conn.Close()
 
-	// Converte valor string "123,22" para float64
-	valorStr = strings.Replace(valorStr, ",", ".", 1)
-	valor, err := strconv.ParseFloat(valorStr, 64)
+	sqlStatement := `
+		INSERT INTO obra.pagamento (
+			idObra,
+			data_do_pagamento,
+			detalhe,
+			categoria,
+			valor,
+			observacao
+		) VALUES ($1, $2, $3, $4, $5, $6)`
+
+	_, err = conn.Exec(sqlStatement,
+		p.IDObra,
+		p.DataPagamento,
+		p.Detalhe,
+		p.Categoria,
+		p.Valor,
+		p.Observacao,
+	)
+
+	return err
+}
+
+func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
+	conn, err := OpenConn()
 	if err != nil {
-		panic(fmt.Sprintf("Erro ao converter valor: %v", err))
+		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
 	}
+	defer conn.Close()
 
 	sqlStatement := `
-		INSERT INTO obra.pagamento ("idObra", "data_do_pagamento", "detalhe", "categoria", "valor", "observacao")
-		VALUES ($1, $2, $3, $4, $5, $6)`
+		SELECT id, idObra, data_do_pagamento, detalhe, categoria, valor, observacao
+		FROM obra.pagamento
+		WHERE idObra = $1
+		ORDER BY data_do_pagamento DESC`
 
-	_, err = conn.Exec(sqlStatement, idObra, dataPagamento, detalhe, categoria, valor, observacao)
+	rows, err := conn.Query(sqlStatement, idObra)
 	if err != nil {
-		panic(fmt.Sprintf("Erro ao inserir pagamento: %v", err))
+		return nil, fmt.Errorf("erro ao executar query: %w", err)
 	}
+	defer rows.Close()
+
+	var pagamentos []Pagamento
+	for rows.Next() {
+		var p Pagamento
+		err := rows.Scan(
+			&p.ID,
+			&p.IDObra,
+			&p.DataPagamento,
+			&p.Detalhe,
+			&p.Categoria,
+			&p.Valor,
+			&p.Observacao,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("erro ao ler linha: %w", err)
+		}
+		pagamentos = append(pagamentos, p)
+	}
+
+	return pagamentos, nil
 }

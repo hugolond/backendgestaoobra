@@ -1,16 +1,11 @@
 package main
 
 import (
-	"backendgestaoobra/config"
-	"backendgestaoobra/pkg"
-	"backendgestaoobra/queue"
 	"backendgestaoobra/src"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,6 +45,10 @@ func main() {
 	router.POST("/api/obra/v1/sendnewobra", src.CadastraObra) //GE 1
 	router.GET("/api/obra/v1/listObra", src.ListObra)         //GE 1
 
+	//Pagamento
+	router.POST("/api/payment/v1/sendnewpayment", src.CadastraPagamento) //GE 1
+	router.GET("/api/payment/v1/listpayment", src.ListPagamentoPorObra)  //GE 1
+
 	// Carrinho Abandonado
 	router.POST("/api/carrinho/v1/rcvarejo", src.RcVarejo) // CA1
 
@@ -59,51 +58,6 @@ func main() {
 	}
 	if err := router.Run(":" + port); err != nil {
 		log.Panicf("error: %s", err)
-	}
-}
-
-func consumer() {
-	// Env
-	cfg := &config.Config{}
-	err := config.New(cfg)
-	if err != nil {
-		fmt.Println("Arquivo '.env' não encontrado")
-	}
-
-	in := make(chan []byte)
-	conn := queue.Connect()
-	ch, err := conn.Channel()
-	if err != nil {
-		panic(err.Error())
-	}
-	//fmt.Println("aa")
-	queue.StartCosuming(ch, in)
-	//fmt.Println("a")
-
-	for payload := range in {
-		var resp BodyDelivered
-		err := json.Unmarshal(payload, &resp)
-		if err != nil {
-			fmt.Println("Erro ao converter Json" + err.Error())
-		}
-		currentTime := time.Now()
-		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | C2 - Consumindo Mensagem Order: " + resp.OrderId)
-		pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "Consumer", resp.OrderId, "OrderId", "web-server-pnb", "Mensagem consumida com sucesso!", "")
-
-		order, err := pkg.GetOrder(cfg.Account, cfg.KeyVtex, cfg.TokenVtex, resp.OrderId)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		currentTime = time.Now()
-		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | C2 - Order Status: " + string(order.Status) + " Order: " + resp.OrderId)
-
-		for _, pacote := range order.PackageAttachment.Packages {
-			if pacote.TrackingNumber == "" && order.Status == "invoiced" {
-				pkg.RegistraEntregue(cfg.Account, cfg.KeyVtex, cfg.TokenVtex, resp.OrderId, string(pacote.InvoiceNumber))
-				pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "Consumer", resp.OrderId, "OrderId", "web-server-pnb", "Notificacao entrega enviado OrderId!", "")
-			}
-		}
 	}
 }
 

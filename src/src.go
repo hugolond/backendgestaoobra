@@ -65,6 +65,16 @@ type Obra struct {
 	DataFinalObra  string `json:"datafinalobra"`  // idem
 }
 
+type Pagamento struct {
+	ID            int     `json:"id,omitempty"`
+	IDObra        string  `json:"idobra"`
+	DataPagamento string  `json:"datapagamento"`
+	Detalhe       string  `json:"detalhe"`
+	Categoria     string  `json:"categoria"`
+	Valor         float64 `json:"valor"`
+	Observacao    string  `json:"observacao"`
+}
+
 type RcCarrinho struct {
 	Document     string `json:"document"`
 	Email        string `json:"email"`
@@ -492,6 +502,48 @@ func ListObra(c *gin.Context) {
 	)
 
 	c.JSON(http.StatusOK, dados)
+}
+
+func CadastraPagamento(c *gin.Context) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(c.Request.Body)
+	pagamento := pkg.Pagamento{}
+	err := json.Unmarshal(buf.Bytes(), &pagamento)
+	if err != nil {
+		log.Println("Erro ao decodificar pagamento:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Erro ao processar pagamento"})
+		return
+	}
+
+	currentTime := time.Now()
+	fmt.Println("[GIN] " + currentTime.Format("2006-01-02 - 15:04:05") + " | PG - Insert pagamento da obra: " + pagamento.IDObra)
+
+	err = pkg.InsertPagamentoStruct(pagamento)
+	if err != nil {
+		log.Println("Erro ao inserir pagamento:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao registrar pagamento"})
+		return
+	}
+
+	pkg.InsertLog(currentTime.Format("2006-01-02 15:04:05"), "PAGAMENTO", pagamento.IDObra, "idObra", "backendgestaoobra", "Pagamento registrado com sucesso!", "")
+	c.JSON(http.StatusOK, gin.H{"message": "Pagamento cadastrado com sucesso!"})
+}
+
+func ListPagamentoPorObra(c *gin.Context) {
+	idObra := c.Query("idobra")
+	if idObra == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parâmetro 'idobra' é obrigatório"})
+		return
+	}
+
+	pagamentos, err := pkg.GetAllPagamentoByObra(idObra)
+	if err != nil {
+		log.Println("Erro ao buscar pagamentos:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar pagamentos"})
+		return
+	}
+
+	c.JSON(http.StatusOK, pagamentos)
 }
 
 func GetSaldo(c *gin.Context) {
