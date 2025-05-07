@@ -546,6 +546,42 @@ func ListPagamentoPorObra(c *gin.Context) {
 	c.JSON(http.StatusOK, pagamentos)
 }
 
+func AtualizaObra(c *gin.Context) {
+	var obra pkg.Obra
+	if err := c.ShouldBindJSON(&obra); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
+		return
+	}
+
+	err := pkg.UpdateObra(obra)
+	if err != nil {
+		log.Println("Erro ao atualizar obra:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar obra"})
+		return
+	}
+
+	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", obra.ID, "idObra", "backendgestaoobra", "Obra atualizada com sucesso!", "")
+	c.JSON(http.StatusOK, gin.H{"message": "Obra atualizada com sucesso!"})
+}
+
+func AtualizaPagamento(c *gin.Context) {
+	var pagamento pkg.Pagamento
+	if err := c.ShouldBindJSON(&pagamento); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
+		return
+	}
+
+	err := pkg.UpdatePagamento(pagamento)
+	if err != nil {
+		log.Println("Erro ao atualizar pagamento:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar pagamento"})
+		return
+	}
+
+	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "PAGAMENTO", strconv.Itoa(pagamento.ID), "idPagamento", "backendgestaoobra", "Pagamento atualizado com sucesso!", "")
+	c.JSON(http.StatusOK, gin.H{"message": "Pagamento atualizado com sucesso!"})
+}
+
 func GetSaldo(c *gin.Context) {
 	/*body := new(ConsultaSaldoPickup)
 	if err := c.Bind(body); err != nil {

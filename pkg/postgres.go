@@ -232,3 +232,67 @@ func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
 
 	return pagamentos, nil
 }
+
+func UpdateObra(obra Obra) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		UPDATE obra.cadastroobra SET
+			nome = $1,
+			endereco = $2,
+			bairro = $3,
+			area = $4,
+			tipo = $5,
+			casagerminada = $6,
+			status = $7,
+			data_inicio_obra = $8,
+			data_final_obra = $9
+		WHERE idObra = $10`
+
+	_, err = conn.Exec(sqlStatement,
+		obra.Nome,
+		obra.Endereco,
+		obra.Bairro,
+		obra.Area,
+		obra.Tipo,
+		obra.Casagerminada,
+		obra.Status,
+		obra.DataInicioObra,
+		obra.DataFinalObra,
+		obra.ID,
+	)
+
+	return err
+}
+
+func UpdatePagamento(p Pagamento) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		UPDATE obra.pagamento SET
+			data_do_pagamento = $1,
+			detalhe = $2,
+			categoria = $3,
+			valor = $4,
+			observacao = $5
+		WHERE id = $6`
+
+	_, err = conn.Exec(sqlStatement,
+		p.DataPagamento,
+		p.Detalhe,
+		p.Categoria,
+		p.Valor,
+		p.Observacao,
+		p.ID,
+	)
+
+	return err
+}
