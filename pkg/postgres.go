@@ -21,6 +21,8 @@ type Obra struct {
 	Status         bool
 	DataInicioObra string // ou time.Time, dependendo da necessidade
 	DataFinalObra  string // idem
+	CreatedAt      string
+	UpdatedAt      string
 }
 
 type Pagamento struct {
@@ -31,6 +33,8 @@ type Pagamento struct {
 	Categoria     string  `json:"categoria"`
 	Valor         float64 `json:"valor"`
 	Observacao    string  `json:"observacao"`
+	CreatedAt     string  `json:"created_at,omitempty"`
+	UpdatedAt     string  `json:"updated_at,omitempty"`
 }
 
 func OpenConn() (*sql.DB, error) {
