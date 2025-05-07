@@ -28,11 +28,11 @@ type Obra struct {
 type Pagamento struct {
 	ID            int     `json:"id,omitempty"`
 	IDObra        string  `json:"idobra"`
-	DataPagamento string  `json:"datapagamento"`
+	DataPagamento *string `json:"datapagamento"`
 	Detalhe       string  `json:"detalhe"`
 	Categoria     string  `json:"categoria"`
 	Valor         float64 `json:"valor"`
-	Observacao    string  `json:"observacao"`
+	Observacao    *string `json:"observacao"`
 	CreatedAt     string  `json:"created_at,omitempty"`
 	UpdatedAt     string  `json:"updated_at,omitempty"`
 }
