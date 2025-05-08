@@ -122,12 +122,37 @@ type RcCarrinho struct {
 	Rclastsessiondate time.Time `json:"rclastsessiondate"`
 }
 
+type ObraPagamento struct {
+	IDObra        string  `json:"idobra"`
+	Nome          string  `json:"nome"`
+	DataPagamento string  `json:"datapagamento"`
+	Valor         float64 `json:"valor"`
+	Categoria     string  `json:"categoria"`
+}
+
 func Healthz(c *gin.Context) {
 	post := gin.H{
 		"message": "Ok",
 	}
 	c.JSON(http.StatusOK, post)
 
+}
+
+// GET /api/dashboard/obra-pagamento
+func GetObraPagamentoUnificado(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	if pkg.AuthMiddleware(token) != "ok" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Token inválido"})
+		return
+	}
+
+	dados, err := pkg.SelectObraPagamentoJoin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dados)
 }
 
 const maxLoja = 5     // quantidade de divisões da lista de lojas ativas

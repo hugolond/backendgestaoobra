@@ -60,6 +60,9 @@ func main() {
 		protected.PUT("/api/payment/v1/update", src.AtualizaPagamento)          // PG 3
 		protected.DELETE("/api/payment/v1/delete", src.DeletePagamento)
 
+		//Dashboard
+		protected.GET("/api/dashboard/obra-pagamento", src.GetObraPagamentoUnificado) //GE 2
+
 	}
 	port := os.Getenv("PORT")
 	if port == "" {

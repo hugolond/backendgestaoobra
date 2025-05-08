@@ -10,6 +10,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type ObraPagamento struct {
+	IDObra        string  `json:"idobra"`
+	Nome          string  `json:"nome"`
+	DataPagamento string  `json:"datapagamento"`
+	Valor         float64 `json:"valor"`
+	Categoria     string  `json:"categoria"`
+}
+
 type Obra struct {
 	ID             string // Usado apenas se quiser armazenar o retorno
 	Nome           string
@@ -90,6 +98,44 @@ func InsertCarrinho(data string, document string, phone string, documentType str
 	if err != nil {
 		panic(err)
 	}
+}
+
+func SelectObraPagamentoJoin() ([]ObraPagamento, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	query := `
+		SELECT
+			o.idObra,
+			o.nome,
+			COALESCE(p.data_do_pagamento, '') AS data_do_pagamento,
+			COALESCE(p.valor, 0),
+			COALESCE(p.categoria, '')
+		FROM obra.cadastroobra o
+		LEFT JOIN obra.pagamento p ON p.idObra = o.idObra
+		ORDER BY o.nome, p.data_do_pagamento DESC
+	`
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao executar query: %w", err)
+	}
+	defer rows.Close()
+
+	var dados []ObraPagamento
+	for rows.Next() {
+		var linha ObraPagamento
+		err := rows.Scan(&linha.IDObra, &linha.Nome, &linha.DataPagamento, &linha.Valor, &linha.Categoria)
+		if err != nil {
+			return nil, fmt.Errorf("erro ao ler linha: %w", err)
+		}
+		dados = append(dados, linha)
+	}
+
+	return dados, nil
 }
 
 func InsertObra(obra Obra) (string, error) {
