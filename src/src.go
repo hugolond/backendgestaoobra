@@ -22,6 +22,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type User struct {
+	ID           string `db:"id"`
+	Username     string `db:"username"`
+	Email        string `db:"email"`
+	Password     string `db:"password"`
+	Active       bool   `db:"active"`
+	Roles        string `db:"roles"`
+	Departament  string `db:"departament"`
+	EmailManager string `db:"emailmanager"`
+}
+
 type jwtModel struct {
 	Username  string
 	CreatedAt time.Time

@@ -10,7 +10,10 @@ require (
 	github.com/lib/pq v1.10.9
 )
 
-require github.com/stretchr/testify v1.8.4 // indirect
+require (
+	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
+)
 
 require (
 	github.com/gin-contrib/sse v0.1.0 // indirect

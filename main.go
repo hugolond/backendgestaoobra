@@ -2,6 +2,7 @@ package main
 
 import (
 	"backendgestaoobra/src"
+	"backendgestaoobra/src/middleware"
 	"fmt"
 	"log"
 	"os"
@@ -39,23 +40,26 @@ func main() {
 	router := gin.Default()
 	router.Use(CORSMiddleware())
 
+	router.POST("/login", src.LoginHandler)
+
 	router.GET("/healthz", src.Healthz)
 
-	//Obra
-	router.POST("/api/obra/v1/sendnewobra", src.CadastraObra) //GE 1
-	router.GET("/api/obra/v1/:idobra", src.GetObraByID)       //GE 1
-	router.GET("/api/obra/v1/listallobra", src.ListObra)      //GE 1
-	router.PUT("/api/obra/v1/update", src.AtualizaObra)       //GE 1
+	protected := router.Group("/")
+	protected.Use(middleware.JWTAuthMiddleware())
+	{
+		//Obra
+		protected.POST("/api/obra/v1/sendnewobra", src.CadastraObra) //GE 1
+		protected.GET("/api/obra/v1/:idobra", src.GetObraByID)       //GE 1
+		protected.GET("/api/obra/v1/listallobra", src.ListObra)      //GE 1
+		protected.PUT("/api/obra/v1/update", src.AtualizaObra)       //GE 1
 
-	//Pagamento
-	router.POST("/api/payment/v1/sendnewpayment", src.CadastraPagamento) //GE 1
-	router.GET("/api/payment/v1/listpayment", src.ListPagamentoPorObra)  //GE 1
-	router.PUT("/api/payment/v1/update", src.AtualizaPagamento)          // PG 3
-	router.DELETE("/api/payment/v1/delete", src.DeletePagamento)
+		//Pagamento
+		protected.POST("/api/payment/v1/sendnewpayment", src.CadastraPagamento) //GE 1
+		protected.GET("/api/payment/v1/listpayment", src.ListPagamentoPorObra)  //GE 1
+		protected.PUT("/api/payment/v1/update", src.AtualizaPagamento)          // PG 3
+		protected.DELETE("/api/payment/v1/delete", src.DeletePagamento)
 
-	// Carrinho Abandonado
-	router.POST("/api/carrinho/v1/rcvarejo", src.RcVarejo) // CA1
-
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
