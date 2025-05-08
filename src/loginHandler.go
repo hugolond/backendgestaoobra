@@ -17,6 +17,38 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+func RefreshTokenHandler(c *gin.Context) {
+	tokenStr := c.Query("token")
+	if tokenStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Token ausente"})
+		return
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+
+	claims := &jwt.RegisteredClaims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Token inválido"})
+		return
+	}
+
+	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(4 * time.Hour))
+	claims.IssuedAt = jwt.NewNumericDate(time.Now().UTC())
+
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := newToken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao gerar novo token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
+
 func LoginHandler(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -61,14 +93,17 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário ou senha inválidos"})
 		return
 	}
-	expirationTime := time.Now().Add(5 * time.Minute)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":   user.ID,
-		"email": user.Email,
-		"roles": user.Roles,
-		"exp":   expirationTime.Unix(),
-	})
 
+	expirationTime := time.Now().Add(4 * time.Hour)
+
+	claims := jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(expirationTime),
+		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		Issuer:    user.Email,
+		Subject:   user.ID,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {

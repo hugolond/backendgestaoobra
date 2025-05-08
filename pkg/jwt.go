@@ -23,7 +23,7 @@ func GenerateToken(username string) (string, error) {
 	if err != nil {
 		fmt.Println("erro token")
 	}
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(4 * time.Hour)
 	claims := &jwt.StandardClaims{
 		ExpiresAt: expirationTime.Unix(),
 		Issuer:    username,
