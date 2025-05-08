@@ -111,12 +111,12 @@ func SelectObraPagamentoJoin() ([]ObraPagamento, error) {
 		SELECT
 			o.idObra,
 			o.nome,
-			COALESCE(p.data_do_pagamento, '') AS data_do_pagamento,
+			COALESCE(p.data_do_pagamento, '2024-01-01') AS data_do_pagamento,
 			COALESCE(p.valor, 0),
 			COALESCE(p.categoria, '')
-		FROM obra.cadastroobra o
-		LEFT JOIN obra.pagamento p ON p.idObra = o.idObra
-		ORDER BY o.nome, p.data_do_pagamento DESC
+			FROM obra.cadastroobra o
+			LEFT JOIN obra.pagamento p ON p.idObra = o.idObra
+			ORDER BY o.nome, p.data_do_pagamento DESC;
 	`
 
 	rows, err := conn.Query(query)
