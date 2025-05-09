@@ -3,6 +3,7 @@ package src
 import (
 	"backendgestaoobra/pkg"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -51,6 +52,7 @@ func RefreshTokenHandler(c *gin.Context) {
 
 func LoginHandler(c *gin.Context) {
 	var req LoginRequest
+	currentTime := time.Now()
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados de login inválidos"})
 		return
@@ -90,6 +92,7 @@ func LoginHandler(c *gin.Context) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Auth Login - User: " + user.Username + " Status - Usuário ou senha inválidos")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário ou senha inválidos"})
 		return
 	}
@@ -111,6 +114,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Auth Login - User: " + user.Username + " Status 200 OK!")
 	c.JSON(http.StatusOK, gin.H{
 		"token": tokenString,
 		"user": gin.H{
