@@ -118,7 +118,8 @@ func LoginHandler(c *gin.Context) {
 	expirationTime := time.Now().Add(4 * time.Hour)
 
 	claims := jwt.MapClaims{
-		"sub":        user.ID,
+		"id":         user.ID,
+		"username":   user.Username,
 		"email":      user.Email,
 		"account_id": user.AccountID,
 		"exp":        expirationTime.Unix(),
