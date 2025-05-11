@@ -46,14 +46,19 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		if id, ok := claims["id"].(string); ok {
+			c.Set("id", id)
+		}
+		if username, ok := claims["username"].(string); ok {
+			c.Set("username", username)
+		}
 
 		// (Opcional) Extrair outros dados úteis
-		userID, _ := claims["sub"].(string)
+
 		email, _ := claims["email"].(string)
 
 		// Armazenar no contexto
 		c.Set("account_id", accountID)
-		c.Set("user_id", userID)
 		c.Set("email", email)
 
 		c.Next()
