@@ -27,7 +27,7 @@ func RefreshTokenHandler(c *gin.Context) {
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 
-	claims := &jwt.RegisteredClaims{}
+	claims := jwt.MapClaims{} // aqui, NÃO é ponteiro
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
 		return []byte(jwtSecret), nil
 	})
@@ -37,8 +37,9 @@ func RefreshTokenHandler(c *gin.Context) {
 		return
 	}
 
-	claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(4 * time.Hour))
-	claims.IssuedAt = jwt.NewNumericDate(time.Now().UTC())
+	// Atualizar expiração
+	claims["exp"] = time.Now().Add(4 * time.Hour).Unix()
+	claims["iat"] = time.Now().Unix()
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := newToken.SignedString([]byte(jwtSecret))
@@ -66,7 +67,7 @@ func LoginHandler(c *gin.Context) {
 	defer db.Close()
 
 	var user User
-	sqlQuery := `SELECT id, username, email, password, active, roles, departament, emailmanager FROM public."User" WHERE email = $1`
+	sqlQuery := `SELECT id, username, email, password, active, roles, departament, emailmanager, account_id FROM public."User" WHERE email = $1`
 	err = db.QueryRow(sqlQuery, req.Email).Scan(
 		&user.ID,
 		&user.Username,
@@ -76,6 +77,7 @@ func LoginHandler(c *gin.Context) {
 		&user.Roles,
 		&user.Departament,
 		&user.EmailManager,
+		&user.AccountID,
 	)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário ou senha inválidos"})
@@ -99,11 +101,12 @@ func LoginHandler(c *gin.Context) {
 
 	expirationTime := time.Now().Add(4 * time.Hour)
 
-	claims := jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(expirationTime),
-		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-		Issuer:    user.Email,
-		Subject:   user.ID,
+	claims := jwt.MapClaims{
+		"sub":        user.ID,
+		"email":      user.Email,
+		"account_id": user.AccountID,
+		"exp":        expirationTime.Unix(),
+		"iat":        time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -118,10 +121,11 @@ func LoginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": tokenString,
 		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
-			"roles":    user.Roles,
+			"id":         user.ID,
+			"username":   user.Username,
+			"email":      user.Email,
+			"roles":      user.Roles,
+			"account_id": user.AccountID,
 		},
 	})
 }

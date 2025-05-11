@@ -28,7 +28,8 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		claims := jwt.MapClaims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
 
@@ -38,7 +39,23 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Aqui você pode extrair claims e colocar no contexto se quiser
+		// Extrair account_id do token e armazenar no contexto
+		accountID, ok := claims["account_id"].(string)
+		if !ok || accountID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "account_id ausente ou inválido no token"})
+			c.Abort()
+			return
+		}
+
+		// (Opcional) Extrair outros dados úteis
+		userID, _ := claims["sub"].(string)
+		email, _ := claims["email"].(string)
+
+		// Armazenar no contexto
+		c.Set("account_id", accountID)
+		c.Set("user_id", userID)
+		c.Set("email", email)
+
 		c.Next()
 	}
 }

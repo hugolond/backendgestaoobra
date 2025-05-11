@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -83,24 +82,7 @@ func InsertLog(data string, app string, keyValue string, keyName string, user st
 	}
 }
 
-func InsertCarrinho(data string, document string, phone string, documentType string, checkouttag string, corporateDocument string, rclastcart string, rclastcartvalue string, rclastsession string, rclastsessiondate time.Time, email string) {
-	conn, err := OpenConn()
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-
-	sqlStatement :=
-		`INSERT INTO varejo.carrinhoabandonado ("createdDate","document",phone,"documentType",checkouttag,"corporateDocument",rclastcart,rclastcartvalue,rclastsession,rclastsessiondate,email)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`
-
-	conn.QueryRow(sqlStatement, data, document, phone, documentType, checkouttag, corporateDocument, rclastcart, rclastcartvalue, rclastsession, rclastsessiondate, email)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func SelectObraPagamentoJoin() ([]ObraPagamento, error) {
+func SelectObraPagamentoJoin(accountID string) ([]ObraPagamento, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -115,11 +97,11 @@ func SelectObraPagamentoJoin() ([]ObraPagamento, error) {
 			COALESCE(p.valor, 0),
 			COALESCE(p.categoria, '')
 			FROM obra.cadastroobra o
-			LEFT JOIN obra.pagamento p ON p.idObra = o.idObra
+			LEFT JOIN obra.pagamento p ON p.idObra = o.idObra AND O.account_id = $1
 			ORDER BY o.nome, p.data_do_pagamento DESC;
 	`
 
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(query, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao executar query: %w", err)
 	}
@@ -138,7 +120,7 @@ func SelectObraPagamentoJoin() ([]ObraPagamento, error) {
 	return dados, nil
 }
 
-func InsertObra(obra Obra) (string, error) {
+func InsertObra(obra Obra, accountId string) (string, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return "", fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -147,9 +129,9 @@ func InsertObra(obra Obra) (string, error) {
 
 	sqlStatement := `
 		INSERT INTO obra.cadastroobra (
-			nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
+			nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at,account_id
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now() ,$10
 		) RETURNING idObra`
 
 	var idObra string
@@ -163,6 +145,7 @@ func InsertObra(obra Obra) (string, error) {
 		obra.Status,
 		obra.DataInicioObra,
 		obra.DataFinalObra,
+		accountId,
 	).Scan(&idObra)
 
 	if err != nil {
@@ -172,7 +155,7 @@ func InsertObra(obra Obra) (string, error) {
 	return idObra, nil
 }
 
-func GetAllObra() ([]Obra, error) {
+func GetAllObra(accountID string) ([]Obra, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -182,9 +165,10 @@ func GetAllObra() ([]Obra, error) {
 	sqlStatement := `
 		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
 		FROM obra.cadastroobra
+		WHERE account_id = $1
 		ORDER BY data_inicio_obra DESC`
 
-	rows, err := conn.Query(sqlStatement)
+	rows, err := conn.Query(sqlStatement, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao executar query: %w", err)
 	}
@@ -216,7 +200,7 @@ func GetAllObra() ([]Obra, error) {
 	return obras, nil
 }
 
-func InsertPagamentoStruct(p Pagamento) error {
+func InsertPagamentoStruct(p Pagamento, accountId string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return err
@@ -225,9 +209,9 @@ func InsertPagamentoStruct(p Pagamento) error {
 
 	sqlStatement := `
 		INSERT INTO obra.pagamento (
-			idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at
+			idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at, account_id
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, now(), now()
+			$1, $2, $3, $4, $5, $6, now(), now(), $7
 		)`
 
 	_, err = conn.Exec(sqlStatement,
@@ -237,12 +221,13 @@ func InsertPagamentoStruct(p Pagamento) error {
 		p.Categoria,
 		p.Valor,
 		p.Observacao,
+		accountId,
 	)
 
 	return err
 }
 
-func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
+func GetAllPagamentoByObra(idObra string, accountID string) ([]Pagamento, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -252,10 +237,10 @@ func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
 	sqlStatement := `
 		SELECT id, idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at
 		FROM obra.pagamento
-		WHERE idObra = $1
+		WHERE idObra = $1 AND account_id = $2
 		ORDER BY data_do_pagamento DESC`
 
-	rows, err := conn.Query(sqlStatement, idObra)
+	rows, err := conn.Query(sqlStatement, idObra, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao executar query: %w", err)
 	}
@@ -284,15 +269,15 @@ func GetAllPagamentoByObra(idObra string) ([]Pagamento, error) {
 	return pagamentos, nil
 }
 
-func DeletePagamento(id string) error {
+func DeletePagamento(id string, accountId string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return fmt.Errorf("erro ao abrir conexão: %w", err)
 	}
 	defer conn.Close()
 
-	sqlStatement := `DELETE FROM obra.pagamento WHERE id = $1`
-	_, err = conn.Exec(sqlStatement, id)
+	sqlStatement := `DELETE FROM obra.pagamento WHERE id = $1 AND account_id = $2`
+	_, err = conn.Exec(sqlStatement, id, accountId)
 	if err != nil {
 		return fmt.Errorf("erro ao excluir pagamento: %w", err)
 	}
@@ -300,7 +285,7 @@ func DeletePagamento(id string) error {
 	return nil
 }
 
-func UpdateObra(obra Obra) error {
+func UpdateObra(obra Obra, accountId string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -319,7 +304,7 @@ func UpdateObra(obra Obra) error {
 			data_inicio_obra = $8,
 			data_final_obra = $9,
 			updated_at = now()
-		WHERE idObra = $10`
+		WHERE idObra = $10 AND account_id = $11 `
 
 	_, err = conn.Exec(sqlStatement,
 		obra.Nome,
@@ -332,12 +317,13 @@ func UpdateObra(obra Obra) error {
 		obra.DataInicioObra,
 		obra.DataFinalObra,
 		obra.ID,
+		accountId,
 	)
 
 	return err
 }
 
-func UpdatePagamento(p Pagamento) error {
+func UpdatePagamento(p Pagamento, accountId string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -352,7 +338,7 @@ func UpdatePagamento(p Pagamento) error {
 			valor = $4,
 			observacao = $5,
 			updated_at = now()
-		WHERE id = $6`
+		WHERE id = $6 AND account_id = $7`
 
 	_, err = conn.Exec(sqlStatement,
 		p.DataPagamento,
@@ -361,12 +347,13 @@ func UpdatePagamento(p Pagamento) error {
 		p.Valor,
 		p.Observacao,
 		p.ID,
+		accountId,
 	)
 
 	return err
 }
 
-func GetObraByID(idObra string) (Obra, error) {
+func GetObraByID(idObra string, accountID string) (Obra, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return Obra{}, fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -376,10 +363,10 @@ func GetObraByID(idObra string) (Obra, error) {
 	sqlStatement := `
 		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
 		FROM obra.cadastroobra
-		WHERE idObra = $1`
+		WHERE idObra = $1 AND account_id = $2`
 
 	var u Obra
-	err = conn.QueryRow(sqlStatement, idObra).Scan(
+	err = conn.QueryRow(sqlStatement, idObra, accountID).Scan(
 		&u.ID,
 		&u.Nome,
 		&u.Endereco,
