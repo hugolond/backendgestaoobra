@@ -156,12 +156,12 @@ func CadastraObra(c *gin.Context) {
 		return
 	}
 	userID := c.GetString("id")
-	if accountID == "" {
+	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
 	userName := c.GetString("username")
-	if accountID == "" {
+	if userName == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
@@ -256,12 +256,12 @@ func CadastraPagamento(c *gin.Context) {
 		return
 	}
 	userID := c.GetString("id")
-	if accountID == "" {
+	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
 	userName := c.GetString("username")
-	if accountID == "" {
+	if userName == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
@@ -317,12 +317,12 @@ func AtualizaObra(c *gin.Context) {
 		return
 	}
 	userID := c.GetString("id")
-	if accountID == "" {
+	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
 	userName := c.GetString("username")
-	if accountID == "" {
+	if userName == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
@@ -350,12 +350,12 @@ func AtualizaPagamento(c *gin.Context) {
 		return
 	}
 	userID := c.GetString("id")
-	if accountID == "" {
+	if userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}
 	userName := c.GetString("username")
-	if accountID == "" {
+	if userName == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
 	}

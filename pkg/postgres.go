@@ -308,9 +308,9 @@ func UpdateObra(obra Obra, accountID string, userID string, userName string) err
 			data_inicio_obra = $8,
 			data_final_obra = $9,
 			updated_at = now(), 
-			userid_at = $12,
-			username_at = $13
-		WHERE idObra = $10 AND account_id = $11 `
+			userid_at = $10,
+			username_at = $11
+		WHERE idObra = $10 AND account_id = $12 `
 
 	_, err = conn.Exec(sqlStatement,
 		obra.Nome,
@@ -323,9 +323,9 @@ func UpdateObra(obra Obra, accountID string, userID string, userName string) err
 		obra.DataInicioObra,
 		obra.DataFinalObra,
 		obra.ID,
-		accountID,
 		userID,
 		userName,
+		accountID,
 	)
 
 	return err
@@ -346,9 +346,9 @@ func UpdatePagamento(p Pagamento, accountID string, userID string, userName stri
 			valor = $4,
 			observacao = $5,
 			updated_at = now(),
-			userid_at = $8,
-			username_at = $9
-		WHERE id = $6 AND account_id = $7`
+			userid_at = $6,
+			username_at = $7
+		WHERE id = $8 AND account_id = $9`
 
 	_, err = conn.Exec(sqlStatement,
 		p.DataPagamento,
@@ -356,10 +356,10 @@ func UpdatePagamento(p Pagamento, accountID string, userID string, userName stri
 		p.Categoria,
 		p.Valor,
 		p.Observacao,
-		p.ID,
-		accountID,
 		userID,
 		userName,
+		p.ID,
+		accountID,
 	)
 
 	return err
