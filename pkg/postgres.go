@@ -120,7 +120,7 @@ func SelectObraPagamentoJoin(accountID string) ([]ObraPagamento, error) {
 	return dados, nil
 }
 
-func InsertObra(obra Obra, accountId string) (string, error) {
+func InsertObra(obra Obra, accountID string, userID string, userName string) (string, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return "", fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -129,9 +129,9 @@ func InsertObra(obra Obra, accountId string) (string, error) {
 
 	sqlStatement := `
 		INSERT INTO obra.cadastroobra (
-			nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at,account_id
+			nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at,account_id,userid_at,username_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now() ,$10
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now() ,$10 ,$11 ,$12
 		) RETURNING idObra`
 
 	var idObra string
@@ -145,7 +145,9 @@ func InsertObra(obra Obra, accountId string) (string, error) {
 		obra.Status,
 		obra.DataInicioObra,
 		obra.DataFinalObra,
-		accountId,
+		accountID,
+		userID,
+		userName,
 	).Scan(&idObra)
 
 	if err != nil {
@@ -200,7 +202,7 @@ func GetAllObra(accountID string) ([]Obra, error) {
 	return obras, nil
 }
 
-func InsertPagamentoStruct(p Pagamento, accountId string) error {
+func InsertPagamentoStruct(p Pagamento, accountID string, userID string, userName string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return err
@@ -209,9 +211,9 @@ func InsertPagamentoStruct(p Pagamento, accountId string) error {
 
 	sqlStatement := `
 		INSERT INTO obra.pagamento (
-			idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at, account_id
+			idObra, data_do_pagamento, detalhe, categoria, valor, observacao, created_at, updated_at, account_id,userid_at,username_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, now(), now(), $7
+			$1, $2, $3, $4, $5, $6, now(), now(), $7, $8, $9
 		)`
 
 	_, err = conn.Exec(sqlStatement,
@@ -221,7 +223,9 @@ func InsertPagamentoStruct(p Pagamento, accountId string) error {
 		p.Categoria,
 		p.Valor,
 		p.Observacao,
-		accountId,
+		accountID,
+		userID,
+		userName,
 	)
 
 	return err
@@ -285,7 +289,7 @@ func DeletePagamento(id string, accountId string) error {
 	return nil
 }
 
-func UpdateObra(obra Obra, accountId string) error {
+func UpdateObra(obra Obra, accountID string, userID string, userName string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -303,7 +307,9 @@ func UpdateObra(obra Obra, accountId string) error {
 			status = $7,
 			data_inicio_obra = $8,
 			data_final_obra = $9,
-			updated_at = now()
+			updated_at = now(), 
+			userid_at = $12,
+			username_at = $13
 		WHERE idObra = $10 AND account_id = $11 `
 
 	_, err = conn.Exec(sqlStatement,
@@ -317,13 +323,15 @@ func UpdateObra(obra Obra, accountId string) error {
 		obra.DataInicioObra,
 		obra.DataFinalObra,
 		obra.ID,
-		accountId,
+		accountID,
+		userID,
+		userName,
 	)
 
 	return err
 }
 
-func UpdatePagamento(p Pagamento, accountId string) error {
+func UpdatePagamento(p Pagamento, accountID string, userID string, userName string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -337,7 +345,9 @@ func UpdatePagamento(p Pagamento, accountId string) error {
 			categoria = $3,
 			valor = $4,
 			observacao = $5,
-			updated_at = now()
+			updated_at = now(),
+			userid_at = $8,
+			username_at = $9
 		WHERE id = $6 AND account_id = $7`
 
 	_, err = conn.Exec(sqlStatement,
@@ -347,7 +357,9 @@ func UpdatePagamento(p Pagamento, accountId string) error {
 		p.Valor,
 		p.Observacao,
 		p.ID,
-		accountId,
+		accountID,
+		userID,
+		userName,
 	)
 
 	return err

@@ -155,6 +155,17 @@ func CadastraObra(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
 		return
 	}
+	userID := c.GetString("id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
+	userName := c.GetString("username")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
+
 	obra := Obra{}
 	err := json.Unmarshal(buf.Bytes(), &obra)
 	if err != nil {
@@ -174,7 +185,7 @@ func CadastraObra(c *gin.Context) {
 
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Insert dados obra: " + obra.Nome)
-	pkg.InsertObra(obra2, accountID)
+	pkg.InsertObra(obra2, accountID, userID, userName)
 	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", obra.Nome, "nome", "backendgestaoobra", "Obra registrada com sucesso!", "")
 	c.JSON(http.StatusOK, gin.H{"message": "Obra cadastrada com sucesso!"})
 }
@@ -244,6 +255,17 @@ func CadastraPagamento(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
 		return
 	}
+	userID := c.GetString("id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
+	userName := c.GetString("username")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
+
 	pagamento := pkg.Pagamento{}
 	err := json.Unmarshal(buf.Bytes(), &pagamento)
 	if err != nil {
@@ -255,7 +277,7 @@ func CadastraPagamento(c *gin.Context) {
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006-01-02 - 15:04:05") + " | PG - Insert pagamento da obra: " + pagamento.IDObra)
 
-	err = pkg.InsertPagamentoStruct(pagamento, accountID)
+	err = pkg.InsertPagamentoStruct(pagamento, accountID, userID, userName)
 	if err != nil {
 		log.Println("Erro ao inserir pagamento:", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao registrar pagamento"})
@@ -294,13 +316,23 @@ func AtualizaObra(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
 		return
 	}
+	userID := c.GetString("id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
+	userName := c.GetString("username")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
 	var obra pkg.Obra
 	if err := c.ShouldBindJSON(&obra); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
 	}
 
-	err := pkg.UpdateObra(obra, accountID)
+	err := pkg.UpdateObra(obra, accountID, userID, userName)
 	if err != nil {
 		log.Println("Erro ao atualizar obra:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar obra"})
@@ -317,13 +349,23 @@ func AtualizaPagamento(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
 		return
 	}
+	userID := c.GetString("id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
+	userName := c.GetString("username")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
+		return
+	}
 	var pagamento pkg.Pagamento
 	if err := c.ShouldBindJSON(&pagamento); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos"})
 		return
 	}
 
-	err := pkg.UpdatePagamento(pagamento, accountID)
+	err := pkg.UpdatePagamento(pagamento, accountID, userID, userName)
 	if err != nil {
 		log.Println("Erro ao atualizar pagamento:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar pagamento"})

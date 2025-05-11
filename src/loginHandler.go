@@ -50,7 +50,6 @@ func RefreshTokenHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
-
 func LoginHandler(c *gin.Context) {
 	var req LoginRequest
 	currentTime := time.Now()
@@ -92,6 +91,23 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	// Verificar status da conta (account)
+	var accountStatus bool
+	sqlAccQuery := `SELECT status FROM obra.account WHERE id = $1`
+	err = db.QueryRow(sqlAccQuery, user.AccountID).Scan(&accountStatus)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não encontrada"})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao verificar status da conta"})
+		return
+	}
+
+	if !accountStatus {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Conta inativa! Por favor acionar o Administrador da página"})
+		return
+	}
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Auth Login - User: " + user.Username + " Status - Usuário ou senha inválidos")
@@ -108,7 +124,6 @@ func LoginHandler(c *gin.Context) {
 		"exp":        expirationTime.Unix(),
 		"iat":        time.Now().Unix(),
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenString, err := token.SignedString([]byte(jwtSecret))
