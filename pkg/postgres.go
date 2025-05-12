@@ -348,14 +348,15 @@ func UpdateObra(obra Obra, accountID string, userID string, userName string) err
 			bairro = $3,
 			area = $4,
 			tipo = $5,
-			casagerminada = $6,
-			status = $7,
-			data_inicio_obra = $8,
-			data_final_obra = $9,
+			previsto = &6,
+			casagerminada = $7,
+			status = $8,
+			data_inicio_obra = $9,
+			data_final_obra = $10,
 			updated_at = now(), 
-			userid_at = $10,
-			username_at = $11
-		WHERE idObra = $12 AND account_id = $13`
+			userid_at = $11,
+			username_at = $12
+		WHERE idObra = $13 AND account_id = $14`
 
 	_, err = conn.Exec(sqlStatement,
 		obra.Nome,
@@ -363,6 +364,7 @@ func UpdateObra(obra Obra, accountID string, userID string, userName string) err
 		obra.Bairro,
 		obra.Area,
 		obra.Tipo,
+		obra.Previsto,
 		obra.Casagerminada,
 		obra.Status,
 		obra.DataInicioObra,
@@ -418,7 +420,7 @@ func GetObraByID(idObra string, accountID string) (Obra, error) {
 	defer conn.Close()
 
 	sqlStatement := `
-		SELECT idObra, nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
+		SELECT idObra, nome, endereco, bairro, area, tipo, previsto, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
 		FROM obra.cadastroobra
 		WHERE idObra = $1 AND account_id = $2`
 
@@ -430,6 +432,7 @@ func GetObraByID(idObra string, accountID string) (Obra, error) {
 		&u.Bairro,
 		&u.Area,
 		&u.Tipo,
+		&u.Previsto,
 		&u.Casagerminada,
 		&u.Status,
 		&u.DataInicioObra,
