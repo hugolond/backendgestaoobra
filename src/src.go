@@ -398,3 +398,20 @@ func DeletePagamento(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pagamento excluído com sucesso"})
 }
+
+func ListarProps(c *gin.Context) {
+	// Verifica autenticação, se necessário
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+
+	dados, err := pkg.GetAllProps()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar props"})
+		return
+	}
+	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "PROPS", "ALL", "props", "backendgestaoobra", "Consulta propos realizada com sucesso!", "")
+	c.JSON(http.StatusOK, dados)
+}

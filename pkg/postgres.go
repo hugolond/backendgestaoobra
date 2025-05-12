@@ -9,6 +9,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type CategoriaProps struct {
+	ID       string `json:"id"`
+	Tipo     string `json:"tipo"`
+	Campo    string `json:"campo"`
+	Subcampo string `json:"subcampo"`
+	Titulo   string `json:"titulo"`
+	Status   bool   `json:"status"`
+}
+
 type ObraPagamento struct {
 	IDObra        string  `json:"idobra"`
 	Nome          string  `json:"nome"`
@@ -65,6 +74,38 @@ func OpenConn() (*sql.DB, error) {
 	}
 	err = db.Ping()
 	return db, err
+}
+
+func GetAllProps() ([]CategoriaProps, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		SELECT id, tipo, campo, subcampo, titulo, status
+		FROM obra.props
+		ORDER BY campo, subcampo;
+	`
+
+	rows, err := conn.Query(sqlStatement)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao executar query: %w", err)
+	}
+	defer rows.Close()
+
+	var categorias []CategoriaProps
+	for rows.Next() {
+		var cat CategoriaProps
+		err := rows.Scan(&cat.ID, &cat.Tipo, &cat.Campo, &cat.Subcampo, &cat.Titulo, &cat.Status)
+		if err != nil {
+			return nil, fmt.Errorf("erro ao escanear linha: %w", err)
+		}
+		categorias = append(categorias, cat)
+	}
+
+	return categorias, nil
 }
 
 func InsertLog(data string, app string, keyValue string, keyName string, user string, mensagem string, erro string) {

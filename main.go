@@ -63,6 +63,9 @@ func main() {
 		//Dashboard
 		protected.GET("/api/dashboard/obra-pagamento", src.GetObraPagamentoUnificado) //GE 2
 
+		//Props
+		router.GET("/api/categoria/props", src.ListarProps)
+
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
