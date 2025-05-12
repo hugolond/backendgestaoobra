@@ -210,7 +210,7 @@ func GetAllObra(accountID string) ([]Obra, error) {
 	defer conn.Close()
 
 	sqlStatement := `
-		SELECT idObra, nome, endereco, bairro, area, tipo, previsto, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
+		SELECT idObra, nome, endereco, bairro, area, tipo, COALESCE(o.previsto, 0), casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
 		FROM obra.cadastroobra
 		WHERE account_id = $1
 		ORDER BY data_inicio_obra DESC`
