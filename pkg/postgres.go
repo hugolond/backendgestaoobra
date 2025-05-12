@@ -97,7 +97,7 @@ func SelectObraPagamentoJoin(accountID string) ([]ObraPagamento, error) {
 			COALESCE(p.valor, 0),
 			COALESCE(p.categoria, '')
 			FROM obra.cadastroobra o
-			LEFT JOIN obra.pagamento p ON p.idObra = o.idObra AND O.account_id = $1
+			INNER JOIN obra.pagamento p ON p.idObra = o.idObra AND p.account_id = $1
 			ORDER BY o.nome, p.data_do_pagamento DESC;
 	`
 
