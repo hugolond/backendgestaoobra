@@ -12,6 +12,7 @@ import (
 type ObraPagamento struct {
 	IDObra        string  `json:"idobra"`
 	Nome          string  `json:"nome"`
+	Previsto      float64 `json:"previsto"`
 	DataPagamento string  `json:"datapagamento"`
 	Valor         float64 `json:"valor"`
 	Categoria     string  `json:"categoria"`
@@ -24,6 +25,7 @@ type Obra struct {
 	Bairro         string
 	Area           string
 	Tipo           int
+	Previsto       float64
 	Casagerminada  bool
 	Status         bool
 	DataInicioObra string // ou time.Time, dependendo da necessidade
@@ -93,6 +95,7 @@ func SelectObraPagamentoJoin(accountID string) ([]ObraPagamento, error) {
 		SELECT
 			o.idObra,
 			o.nome,
+			COALESCE(o.previsto, 0) as previsto,
 			COALESCE(p.data_do_pagamento, '2024-01-01') AS data_do_pagamento,
 			COALESCE(p.valor, 0),
 			COALESCE(p.categoria, '')
@@ -110,7 +113,7 @@ func SelectObraPagamentoJoin(accountID string) ([]ObraPagamento, error) {
 	var dados []ObraPagamento
 	for rows.Next() {
 		var linha ObraPagamento
-		err := rows.Scan(&linha.IDObra, &linha.Nome, &linha.DataPagamento, &linha.Valor, &linha.Categoria)
+		err := rows.Scan(&linha.IDObra, &linha.Nome, &linha.Previsto, &linha.DataPagamento, &linha.Valor, &linha.Categoria)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao ler linha: %w", err)
 		}
@@ -129,9 +132,9 @@ func InsertObra(obra Obra, accountID string, userID string, userName string) (st
 
 	sqlStatement := `
 		INSERT INTO obra.cadastroobra (
-			nome, endereco, bairro, area, tipo, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at,account_id,userid_at,username_at
+			nome, endereco, bairro, area, tipo, previsto, casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at,account_id,userid_at,username_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now() ,$10 ,$11 ,$12
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now() ,$11 ,$12 ,$13
 		) RETURNING idObra`
 
 	var idObra string
@@ -141,6 +144,7 @@ func InsertObra(obra Obra, accountID string, userID string, userName string) (st
 		obra.Bairro,
 		obra.Area,
 		obra.Tipo,
+		obra.Previsto,
 		obra.Casagerminada,
 		obra.Status,
 		obra.DataInicioObra,

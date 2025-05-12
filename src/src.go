@@ -57,18 +57,19 @@ type Frequencia struct {
 }
 
 type Obra struct {
-	ID             string `json:"id,omitempty"`
-	Nome           string `json:"nome"`
-	Endereco       string `json:"endereco"`
-	Bairro         string `json:"bairro"`
-	Area           string `json:"area"`
-	Tipo           int    `json:"tipo"`
-	Casagerminada  bool   `json:"casagerminada"`
-	Status         bool   `json:"status"`
-	DataInicioObra string `json:"datainicioobra"`
-	DataFinalObra  string `json:"datafinalobra"`
-	CreatedAt      string `json:"created_at,omitempty"`
-	UpdatedAt      string `json:"updated_at,omitempty"`
+	ID             string  `json:"id,omitempty"`
+	Nome           string  `json:"nome"`
+	Endereco       string  `json:"endereco"`
+	Bairro         string  `json:"bairro"`
+	Area           string  `json:"area"`
+	Tipo           int     `json:"tipo"`
+	Previsto       float64 `json:"previsto"`
+	Casagerminada  bool    `json:"casagerminada"`
+	Status         bool    `json:"status"`
+	DataInicioObra string  `json:"datainicioobra"`
+	DataFinalObra  string  `json:"datafinalobra"`
+	CreatedAt      string  `json:"created_at,omitempty"`
+	UpdatedAt      string  `json:"updated_at,omitempty"`
 }
 
 type Pagamento struct {
@@ -178,6 +179,7 @@ func CadastraObra(c *gin.Context) {
 	obra2.Bairro = obra.Bairro
 	obra2.Area = obra.Area
 	obra2.Tipo = obra.Tipo
+	obra2.Previsto = obra.Previsto
 	obra2.Casagerminada = obra.Casagerminada
 	obra2.Status = obra.Status
 	obra2.DataInicioObra = obra.DataInicioObra
