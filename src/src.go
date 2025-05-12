@@ -400,13 +400,6 @@ func DeletePagamento(c *gin.Context) {
 }
 
 func ListarProps(c *gin.Context) {
-	// Verifica autenticação, se necessário
-	accountID := c.GetString("account_id")
-	if accountID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
-		return
-	}
-
 	dados, err := pkg.GetAllProps()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar props"})
