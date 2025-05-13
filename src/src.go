@@ -187,8 +187,13 @@ func CadastraObra(c *gin.Context) {
 
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Insert dados obra: " + obra.Nome)
-	pkg.InsertObra(obra2, accountID, userID, userName)
-	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", obra.Nome, "nome", "backendgestaoobra", "Obra registrada com sucesso!", "")
+	id, err := pkg.InsertObra(obra2, accountID, userID, userName)
+	if err != nil {
+		log.Println("Erro ao inserir pagamento:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao registrar obra"})
+		return
+	}
+	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", obra.Nome, "nome", "backendgestaoobra", "Obra registrada com sucesso! Id: "+id, "")
 	c.JSON(http.StatusOK, gin.H{"message": "Obra cadastrada com sucesso!"})
 }
 
