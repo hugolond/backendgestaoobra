@@ -311,7 +311,7 @@ func ForgotPassword(c *gin.Context) {
 
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Redefinir Senha - User: " + user.Username + " Status 200 OK!")
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha. Acesse sua caixa de e-mail para prosseguir",
+		"message": "Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha. Acesse sua caixa de e-mail e click no link recebido",
 	})
 }
 
