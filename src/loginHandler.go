@@ -357,7 +357,7 @@ func ResetPassword(c *gin.Context) {
 		return
 	}
 
-	_, err = tx.Exec(`UPDATE public."User" SET password = $1 WHERE id = $2`, string(hashedPassword), userID)
+	_, err = tx.Exec(`UPDATE public."User" SET password = $1 WHERE id = $2`, string(hashedPassword), user.ID)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar a senha."})

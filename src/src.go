@@ -26,11 +26,6 @@ type User struct {
 	AccountID    string `db:"account_id"`
 }
 
-type jwtModel struct {
-	Username  string
-	CreatedAt time.Time
-}
-
 type BodyDelivered struct {
 	OrderId string
 	Status  string
@@ -44,10 +39,6 @@ type ConsultaSaldoPickup struct {
 type AuthReceived struct {
 	Username string
 	Password string
-}
-type TokenBody struct {
-	Token string `"token"`
-	User  string `"user"`
 }
 type Frequencia struct {
 	IdLoja        string
