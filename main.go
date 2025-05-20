@@ -41,6 +41,7 @@ func main() {
 	router.Use(CORSMiddleware())
 
 	router.POST("/login", src.LoginHandler)
+	router.POST("/forgot-password", src.ForgotPassword)
 	router.GET("/refresh", src.RefreshTokenHandler)
 
 	router.GET("/healthz", src.Healthz)
