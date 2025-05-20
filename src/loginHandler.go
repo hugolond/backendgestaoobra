@@ -339,7 +339,7 @@ func ResetPassword(c *gin.Context) {
 
 	err = db.QueryRow(`SELECT user_id, expires_at, used FROM public.password_reset_tokens WHERE token = $1`, req.Token).Scan(&userID, &expiresAt, &used)
 	if err == sql.ErrNoRows || used || time.Now().After(expiresAt) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Token inválido ou expirado."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token inválido ou expirado." + expiresAt.String()})
 		return
 	}
 
