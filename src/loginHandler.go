@@ -241,7 +241,7 @@ func ForgotPassword(c *gin.Context) {
 			return
 		}
 
-		expiration := time.Now().Add(10 * time.Minute)
+		expiration := time.Now().Add(20 * time.Minute)
 
 		insertQuery := `
 			INSERT INTO public.password_reset_tokens (user_id, token, created_at, expires_at, used) 
