@@ -333,12 +333,14 @@ func ResetPassword(c *gin.Context) {
 	}
 	defer db.Close()
 
-	var userID int
+	var user User
 	var expiresAt time.Time
 	var used bool
+	currentTime := time.Now()
 
-	err = db.QueryRow(`SELECT user_id, expires_at, used FROM public.password_reset_tokens WHERE token = $1`, req.Token).Scan(&userID, &expiresAt, &used)
+	err = db.QueryRow(`SELECT user_id, expires_at, used FROM public.password_reset_tokens WHERE token = $1`, req.Token).Scan(&user.ID, &expiresAt, &used)
 	if err == sql.ErrNoRows || used || time.Now().After(expiresAt) {
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Erro ao redefinir Senha - User: " + user.ID)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Token inválido ou expirado." + expiresAt.String()})
 		return
 	}
