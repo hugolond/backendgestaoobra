@@ -192,15 +192,21 @@ func ForgotPassword(c *gin.Context) {
 		&user.AccountID,
 	)
 	if err == sql.ErrNoRows {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Erro a redefinir senha"})
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Redefinir senha - Usuário não localizado User: " + user.Username + " Status 400 OK!")
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha. Acesse sua caixa de e-mail e click no link recebido",
+		})
 		return
 	} else if err != nil {
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Redefinir senha - Erro: " + err.Error() + " Status 400 OK!")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro a redefinir senha"})
 		return
 	}
-
 	if !user.Active {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Erro a redefinir senha"})
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Redefinir senha - Usuário inativo User: " + user.Username + " Status 400 OK!")
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha. Acesse sua caixa de e-mail e click no link recebido",
+		})
 		return
 	}
 
@@ -229,8 +235,10 @@ func ForgotPassword(c *gin.Context) {
 	`
 	err = db.QueryRow(sqlTokenQuery, user.ID).Scan(&existingToken)
 	if err != nil && err != sql.ErrNoRows {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao verificar token"})
-		return
+		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Redefinir senha - Token já Gerado e ativo User: " + user.Username + " Status 400 OK!")
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha. Acesse sua caixa de e-mail e click no link recebido",
+		})
 	}
 
 	if err == sql.ErrNoRows {
