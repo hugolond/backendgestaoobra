@@ -314,3 +314,66 @@ func ForgotPassword(c *gin.Context) {
 		"message": "Se o e-mail existir, um link de redefinição foi enviado.",
 	})
 }
+
+func ResetPassword(c *gin.Context) {
+	var req struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos."})
+		return
+	}
+
+	db, err := pkg.OpenConn()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro na conexão com o banco de dados."})
+		return
+	}
+	defer db.Close()
+
+	var userID int
+	var expiresAt time.Time
+	var used bool
+
+	err = db.QueryRow(`SELECT user_id, expires_at, used FROM public.password_reset_tokens WHERE token = $1`, req.Token).Scan(&userID, &expiresAt, &used)
+	if err == sql.ErrNoRows || used || time.Now().After(expiresAt) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token inválido ou expirado."})
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao criptografar a senha."})
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao iniciar a transação."})
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE public."User" SET password = $1 WHERE id = $2`, string(hashedPassword), userID)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar a senha."})
+		return
+	}
+
+	_, err = tx.Exec(`UPDATE public.password_reset_tokens SET used = true WHERE token = $1`, req.Token)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar o token."})
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao confirmar a transação."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Senha redefinida com sucesso."})
+}

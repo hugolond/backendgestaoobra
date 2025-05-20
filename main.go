@@ -42,6 +42,8 @@ func main() {
 
 	router.POST("/login", src.LoginHandler)
 	router.POST("/forgot-password", src.ForgotPassword)
+	router.POST("/reset-password", src.ResetPassword)
+
 	router.GET("/refresh", src.RefreshTokenHandler)
 
 	router.GET("/healthz", src.Healthz)
