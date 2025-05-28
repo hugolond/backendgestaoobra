@@ -1,6 +1,8 @@
 package src
 
 import (
+	models "backendgestaoobra/model"
+	"backendgestaoobra/pkg"
 	"encoding/json"
 	"io"
 	"log"
@@ -110,6 +112,30 @@ func HandleWebhook(c *gin.Context) {
 	}
 
 	switch event.Type {
+
+	case "customer.subscription.created":
+		var subscripton stripe.Subscription
+		if err := json.Unmarshal(event.Data.Raw, &subscripton); err != nil {
+			log.Printf("Erro ao decodificar Subscription: %v", err)
+			c.String(400, "Erro de parsing")
+			return
+		}
+		log.Printf("✅ Pagamento bem-sucedido do cliente: %s", subscripton.Customer.Email)
+		sub := models.Subscription{
+			UserID:         0,
+			StripeCustomer: subscripton.Customer.Email, // <- Melhor que CustomerEmail
+			StripeSession:  subscripton.Customer.ID,
+			Plan:           "", // Requer que você envie metadata no checkout
+			Status:         "active",
+		}
+
+		if err := pkg.SaveSubscription(sub); err != nil {
+			log.Println("❌ Erro ao salvar assinatura:", err)
+			c.String(http.StatusInternalServerError, "Erro ao salvar")
+			return
+		}
+		log.Println("✅ Assinatura salva com sucesso:", sub)
+
 	case "payment_intent.succeeded":
 		var paymentIntent stripe.PaymentIntent
 		if err := json.Unmarshal(event.Data.Raw, &paymentIntent); err != nil {
