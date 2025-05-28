@@ -49,7 +49,7 @@ func main() {
 	router.GET("/healthz", src.Healthz)
 
 	// WebHook Striper
-	router.POST("/webhook/stripe", src.StripeWebhookHandler)
+	router.POST("/webhook/stripe", src.HandleWebhook)
 
 	protected := router.Group("/")
 	protected.Use(middleware.JWTAuthMiddleware())
