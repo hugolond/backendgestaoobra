@@ -29,17 +29,23 @@ func StripeWebhookHandler(c *gin.Context) {
 
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
+		log.Println("❌ Erro ao ler corpo:", err)
 		c.String(http.StatusRequestEntityTooLarge, "Request too large")
 		return
 	}
 
 	endpointSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
-	sigHeader := c.GetHeader("Stripe-Signature")
+	if endpointSecret == "" {
+		log.Println("❌ STRIPE_WEBHOOK_SECRET não definido")
+		c.String(http.StatusInternalServerError, "Webhook secret ausente")
+		return
+	}
 
+	sigHeader := c.GetHeader("Stripe-Signature")
 	event, err := webhook.ConstructEvent(payload, sigHeader, endpointSecret)
 	if err != nil {
-		log.Println("⚠️  Webhook signature verification failed.")
-		c.String(http.StatusBadRequest, "Webhook signature verification failed")
+		log.Println("⚠️  Webhook signature verification failed:", err)
+		c.String(http.StatusBadRequest, "Assinatura inválida")
 		return
 	}
 
@@ -47,15 +53,16 @@ func StripeWebhookHandler(c *gin.Context) {
 	case "checkout.session.completed":
 		var session stripe.CheckoutSession
 		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
-			c.String(http.StatusBadRequest, "Error parsing session data")
+			log.Println("❌ Erro ao decodificar session:", err)
+			c.String(http.StatusBadRequest, "Erro parsing")
 			return
 		}
 
 		sub := models.Subscription{
 			UserID:         0,
-			StripeCustomer: session.CustomerEmail,
+			StripeCustomer: session.Customer.ID, // <- Melhor que CustomerEmail
 			StripeSession:  session.ID,
-			Plan:           string(session.Currency), // se estiver usando metadata
+			Plan:           session.Metadata["plan"], // Requer que você envie metadata no checkout
 			Status:         "active",
 		}
 
@@ -64,10 +71,10 @@ func StripeWebhookHandler(c *gin.Context) {
 			c.String(http.StatusInternalServerError, "Erro ao salvar")
 			return
 		}
-		log.Println("✅ Sessão de assinatura salva com sucesso")
+		log.Println("✅ Assinatura salva com sucesso:", sub)
 
 	default:
-		log.Println("🔔 Evento recebido:", event.Type)
+		log.Println("📦 Evento ignorado:", event.Type)
 	}
 
 	c.Status(http.StatusOK)
