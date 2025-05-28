@@ -14,6 +14,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/stripe/stripe-go/v78 v78.12.0 // indirect
+	github.com/stripe/stripe-go/v82 v82.2.0 // indirect
 )
 
 require (

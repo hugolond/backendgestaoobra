@@ -4,14 +4,14 @@ import (
 	models "backendgestaoobra/model"
 	"backendgestaoobra/pkg"
 	"encoding/json"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stripe/stripe-go/v78"
-	"github.com/stripe/stripe-go/v78/webhook"
+	"github.com/stripe/stripe-go/v82"
+	"github.com/stripe/stripe-go/v82/webhook"
 )
 
 type Subscription struct {
@@ -27,7 +27,8 @@ func StripeWebhookHandler(c *gin.Context) {
 	const MaxBodyBytes = int64(65536)
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxBodyBytes)
 
-	payload, err := io.ReadAll(c.Request.Body)
+	payload, err := ioutil.ReadAll(c.Request.Body)
+	//payload, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		log.Println("❌ Erro ao ler corpo:", err)
 		c.String(http.StatusRequestEntityTooLarge, "Request too large")
