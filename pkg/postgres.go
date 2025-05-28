@@ -1,8 +1,10 @@
 package pkg
 
 import (
+	models "backendgestaoobra/model"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -450,4 +452,22 @@ func GetObraByID(idObra string, accountID string) (Obra, error) {
 	}
 
 	return u, nil
+}
+
+func SaveSubscription(s models.Subscription) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		INSERT INTO subscriptions (user_id, stripe_customer, stripe_session, plan, status)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err = conn.Exec(sqlStatement, s.UserID, s.StripeCustomer, s.StripeSession, s.Plan, s.Status)
+	if err != nil {
+		log.Println("Erro ao executar INSERT:", err)
+	}
+	return err
 }

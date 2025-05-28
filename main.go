@@ -48,6 +48,9 @@ func main() {
 
 	router.GET("/healthz", src.Healthz)
 
+	// WebHook Striper
+	router.POST("/webhook/stripe", src.StripeWebhookHandler)
+
 	protected := router.Group("/")
 	protected.Use(middleware.JWTAuthMiddleware())
 	{
