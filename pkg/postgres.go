@@ -454,7 +454,7 @@ func GetObraByID(idObra string, accountID string) (Obra, error) {
 	return u, nil
 }
 
-func SaveSubscription(s models.Subscription) error {
+func SaveSubscription(sub models.Subscription) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return err
@@ -462,10 +462,22 @@ func SaveSubscription(s models.Subscription) error {
 	defer conn.Close()
 
 	sqlStatement := `
-		INSERT INTO obra.subscriptions (user_id, stripe_customer, stripe_session, plan, status)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO subscriptions (
+			user_id, stripe_customer, stripe_subscription,
+			stripe_price_id, stripe_product_id, stripe_plan_amount,
+			currency, interval, interval_count, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
-	_, err = conn.Exec(sqlStatement, s.UserID, s.StripeCustomer, s.StripeSession, s.Plan, s.Status)
+	_, err = conn.Exec(sqlStatement, sub.UserID,
+		sub.StripeCustomer,
+		sub.StripeSubscription,
+		sub.StripePriceID,
+		sub.StripeProductID,
+		sub.StripePlanAmount,
+		sub.Currency,
+		sub.Interval,
+		sub.IntervalCount,
+		sub.Status)
 	if err != nil {
 		log.Println("Erro ao executar INSERT:", err)
 	}

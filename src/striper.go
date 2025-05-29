@@ -114,19 +114,24 @@ func HandleWebhook(c *gin.Context) {
 	switch event.Type {
 
 	case "customer.subscription.created":
-		var subscripton stripe.Customer
-		if err := json.Unmarshal(event.Data.Raw, &subscripton); err != nil {
+		var subscription stripe.Subscription
+		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
 			log.Printf("Erro ao decodificar Subscription: %v", err)
 			c.String(400, "Erro de parsing")
 			return
 		}
-		log.Printf("✅ Pagamento bem-sucedido do cliente: %s", subscripton.Email)
+		log.Printf("✅ Pagamento bem-sucedido do cliente: %s", subscription.Customer.ID)
 		sub := models.Subscription{
-			UserID:         0,
-			StripeCustomer: subscripton.Email, // <- Melhor que CustomerEmail
-			StripeSession:  subscripton.ID,
-			Plan:           "", // Requer que você envie metadata no checkout
-			Status:         "active",
+			UserID:             0, // você pode atualizar se tiver user logado
+			StripeCustomer:     subscription.Customer.ID,
+			StripeSubscription: subscription.ID,
+			StripePriceID:      subscription.Items.Data[0].Plan.ID,
+			StripeProductID:    subscription.Items.Data[0].Plan.Product.ID,
+			StripePlanAmount:   subscription.Items.Data[0].Plan.Amount,
+			Currency:           string(subscription.Currency),
+			Interval:           string(subscription.Items.Data[0].Plan.Interval),
+			IntervalCount:      int64(subscription.Items.Data[0].Plan.IntervalCount),
+			Status:             string(subscription.Status),
 		}
 
 		if err := pkg.SaveSubscription(sub); err != nil {
