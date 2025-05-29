@@ -141,23 +141,33 @@ func HandleWebhook(c *gin.Context) {
 		}
 		log.Println("✅ Assinatura salva com sucesso:", sub)
 
-	case "payment_intent.succeeded":
-		var paymentIntent stripe.PaymentIntent
-		if err := json.Unmarshal(event.Data.Raw, &paymentIntent); err != nil {
-			log.Printf("Erro ao decodificar PaymentIntent: %v", err)
+	case "customer.subscription.deleted":
+		var subscription stripe.Subscription
+		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
+			log.Printf("Erro ao decodificar Subscription: %v", err)
 			c.String(400, "Erro de parsing")
 			return
 		}
-		log.Printf("✅ Pagamento bem-sucedido no valor de %d", paymentIntent.Amount)
+		log.Printf("✅ Cancelamento sucedido do cliente: %s", subscription.Customer.ID)
+		sub := models.Subscription{
+			UserID:             0, // você pode atualizar se tiver user logado
+			StripeCustomer:     subscription.Customer.ID,
+			StripeSubscription: subscription.ID,
+			StripePriceID:      subscription.Items.Data[0].Plan.ID,
+			StripeProductID:    subscription.Items.Data[0].Plan.Product.ID,
+			StripePlanAmount:   subscription.Items.Data[0].Plan.Amount,
+			Currency:           string(subscription.Currency),
+			Interval:           string(subscription.Items.Data[0].Plan.Interval),
+			IntervalCount:      int64(subscription.Items.Data[0].Plan.IntervalCount),
+			Status:             string(subscription.Status),
+		}
 
-	case "payment_method.attached":
-		var paymentMethod stripe.PaymentMethod
-		if err := json.Unmarshal(event.Data.Raw, &paymentMethod); err != nil {
-			log.Printf("Erro ao decodificar PaymentMethod: %v", err)
-			c.String(400, "Erro de parsing")
+		if err := pkg.SaveSubscription(sub); err != nil {
+			log.Println("❌ Erro ao salvar cancelamento:", err)
+			c.String(http.StatusInternalServerError, "Erro ao salvar")
 			return
 		}
-		log.Printf("✅ Método de pagamento anexado: %s", paymentMethod.ID)
+		log.Println("✅ Cancelamento salvo com sucesso:", sub)
 
 	default:
 		log.Printf("🔔 Evento não tratado: %s", event.Type)
