@@ -462,7 +462,7 @@ func SaveSubscription(sub models.Subscription) error {
 	defer conn.Close()
 
 	sqlStatement := `
-		INSERT INTO subscriptions (
+		INSERT INTO obra.subscriptions (
 			user_id, stripe_customer, stripe_subscription,
 			stripe_price_id, stripe_product_id, stripe_plan_amount,
 			currency, interval, interval_count, status
