@@ -14,6 +14,7 @@ type Subscription struct {
 	Interval           string `db:"interval"`
 	IntervalCount      int64  `db:"interval_count"`
 	Status             string `db:"status"`
+	CreatedAt          string `db:"created_at"`
 }
 
 type Account struct {

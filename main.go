@@ -69,6 +69,9 @@ func main() {
 		//Dashboard
 		protected.GET("/api/dashboard/obra-pagamento", src.GetObraPagamentoUnificado) //GE 2
 
+		//Assinatura
+		protected.GET("/api/subscriptions", src.GetSubscription)
+
 		//Props
 		router.GET("/api/categoria/props", src.ListarProps)
 

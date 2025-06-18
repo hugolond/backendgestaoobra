@@ -454,7 +454,7 @@ func GetObraByID(idObra string, accountID string) (Obra, error) {
 	return u, nil
 }
 
-func SaveSubscription(sub models.Subscription) error {
+func SaveSubscription(sub models.Subscription, email string) error {
 	conn, err := OpenConn()
 	if err != nil {
 		return err
@@ -463,12 +463,12 @@ func SaveSubscription(sub models.Subscription) error {
 
 	sqlStatement := `
 		INSERT INTO obra.subscriptions (
-			user_id, stripe_customer, stripe_subscription,
+			user_id, email, stripe_customer, stripe_subscription,
 			stripe_price_id, stripe_product_id, stripe_plan_amount,
 			currency, interval, interval_count, status
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
-	_, err = conn.Exec(sqlStatement, sub.UserID,
+	_, err = conn.Exec(sqlStatement, sub.UserID, email,
 		sub.StripeCustomer,
 		sub.StripeSubscription,
 		sub.StripePriceID,
@@ -482,6 +482,43 @@ func SaveSubscription(sub models.Subscription) error {
 		log.Println("Erro ao executar INSERT:", err)
 	}
 	return err
+}
+
+func GetSubscription(email string) ([]models.Subscription, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	query := `
+	SELECT s.stripe_customer, s.stripe_subscription, s.stripe_product_id,
+		   s.stripe_price_id, s.stripe_plan_amount, s.currency,
+		   s.interval, s.interval_count, s.status, s.created_at
+	FROM obra.subscriptions s
+	JOIN obra.account a ON s.account_id = a.id
+	WHERE a.email = $1
+	ORDER BY s.created_at DESC
+	`
+
+	rows, err := conn.Query(query, email)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []models.Subscription
+	for rows.Next() {
+		var e models.Subscription
+		err := rows.Scan(&e.StripeCustomer, &e.StripeSubscription, &e.StripeProductID,
+			&e.StripePriceID, &e.StripePlanAmount, &e.Currency,
+			&e.Interval, &e.IntervalCount, &e.Status, &e.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, e)
+	}
+	return events, nil
 }
 
 func CreateAccount(account models.Account) error {

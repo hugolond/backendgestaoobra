@@ -66,18 +66,18 @@ func HandleWebhook(c *gin.Context) {
 			IntervalCount:      int64(subscription.Items.Data[0].Plan.IntervalCount),
 			Status:             string(subscription.Status),
 		}
+		customer, err := pkg.GetStripeCustomer(subscription.Customer.ID)
+		if err != nil {
+			log.Fatal("Erro ao consultar cliente:", err)
+			return
+		}
 
-		if err := pkg.SaveSubscription(sub); err != nil {
+		if err := pkg.SaveSubscription(sub, customer.Email); err != nil {
 			log.Println("❌ Erro ao salvar assinatura:", err)
 			c.String(http.StatusInternalServerError, "Erro ao salvar")
 			return
 		}
 		log.Println("✅ Assinatura salva com sucesso:", sub)
-
-		customer, err := pkg.GetStripeCustomer(subscription.Customer.ID)
-		if err != nil {
-			log.Fatal("Erro ao consultar cliente:", err)
-		}
 
 		account, err := StartAtivacao(customer.Name, customer.Email, subscription.Items.Data[0].Plan.Product.ID)
 		if err != nil {
@@ -106,7 +106,13 @@ func HandleWebhook(c *gin.Context) {
 			Status:             string(subscription.Status),
 		}
 
-		if err := pkg.SaveSubscription(sub); err != nil {
+		customer, err := pkg.GetStripeCustomer(subscription.Customer.ID)
+		if err != nil {
+			log.Fatal("Erro ao consultar cliente:", err)
+			return
+		}
+
+		if err := pkg.SaveSubscription(sub, customer.Email); err != nil {
 			log.Println("❌ Erro ao salvar cancelamento:", err)
 			c.String(http.StatusInternalServerError, "Erro ao salvar")
 			return

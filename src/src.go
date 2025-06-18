@@ -404,3 +404,19 @@ func ListarProps(c *gin.Context) {
 	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "PROPS", "ALL", "props", "backendgestaoobra", "Consulta propos realizada com sucesso!", "")
 	c.JSON(http.StatusOK, dados)
 }
+
+// GET /api/dashboard/obra-pagamento
+func GetSubscription(c *gin.Context) {
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+	dados, err := pkg.GetSubscription(accountID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, dados)
+}
