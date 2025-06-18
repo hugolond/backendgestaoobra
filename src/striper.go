@@ -79,7 +79,7 @@ func HandleWebhook(c *gin.Context) {
 			log.Fatal("Erro ao consultar cliente:", err)
 		}
 
-		account, err := StartAtivacao(customer.Email, subscription.Items.Data[0].Plan.Product.ID)
+		account, err := StartAtivacao(customer.Name, customer.Email, subscription.Items.Data[0].Plan.Product.ID)
 		if err != nil {
 			log.Fatal("Erro na ativação:", err)
 		}

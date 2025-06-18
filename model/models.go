@@ -22,6 +22,7 @@ type Account struct {
 	Email           string    `json:"email"`
 	StripeProductID string    `json:"stripe_product_id"`
 	CreatedAt       time.Time `json:"created_at"`
+	Status          bool      `json:"status"`
 }
 
 type StripeCustomer struct {

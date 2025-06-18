@@ -9,7 +9,7 @@ import (
 )
 
 // StartAtivacao cria ou atualiza uma conta com base no email e plano Stripe
-func StartAtivacao(email string, stripeProductID string) (*models.Account, error) {
+func StartAtivacao(nome string, email string, stripeProductID string) (*models.Account, error) {
 	// 1. Verifica se já existe account com este email
 	existingAccount, err := pkg.GetAccountByEmail(email)
 	if err != nil {
@@ -29,8 +29,10 @@ func StartAtivacao(email string, stripeProductID string) (*models.Account, error
 	// 3. Cria nova conta
 	newAccount := models.Account{
 		ID:              uuid.NewString(),
+		Nome:            nome,
 		Email:           email,
 		StripeProductID: stripeProductID,
+		Status:          true,
 		CreatedAt:       time.Now(),
 	}
 

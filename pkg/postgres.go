@@ -492,10 +492,10 @@ func CreateAccount(account models.Account) error {
 	defer conn.Close()
 
 	query := `
-		INSERT INTO obra.account (id, nome, email, stripe_product_id, created_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO obra.account (id, nome, email, stripe_product_id, status,created_at)
+		VALUES ($1, $2, $3, $4, $5 ,$6)
 	`
-	_, err = conn.Exec(query, account.ID, account.Nome, account.Email, account.StripeProductID, account.CreatedAt)
+	_, err = conn.Exec(query, account.ID, account.Nome, account.Email, account.StripeProductID, account.Status, account.CreatedAt)
 	if err != nil {
 		log.Println("Erro ao criar account:", err)
 		return err
