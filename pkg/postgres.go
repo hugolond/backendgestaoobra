@@ -466,7 +466,7 @@ func SaveSubscription(sub models.Subscription, email string) error {
 			user_id, email, stripe_customer, stripe_subscription,
 			stripe_price_id, stripe_product_id, stripe_plan_amount,
 			currency, interval, interval_count, status
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10 ,$11)
 	`
 	_, err = conn.Exec(sqlStatement, sub.UserID, email,
 		sub.StripeCustomer,
