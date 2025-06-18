@@ -496,8 +496,7 @@ func GetSubscription(email string) ([]models.Subscription, error) {
 		   s.stripe_price_id, s.stripe_plan_amount, s.currency,
 		   s.interval, s.interval_count, s.status, s.created_at
 	FROM obra.subscriptions s
-	JOIN obra.account a ON s.account_id = a.id
-	WHERE a.email = $1
+	WHERE s.email = $1
 	ORDER BY s.created_at DESC
 	`
 
