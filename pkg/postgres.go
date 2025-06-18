@@ -483,3 +483,69 @@ func SaveSubscription(sub models.Subscription) error {
 	}
 	return err
 }
+
+func CreateAccount(account models.Account) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	query := `
+		INSERT INTO obra.account (id, nome, email, stripe_product_id, created_at)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err = conn.Exec(query, account.ID, account.Nome, account.Email, account.StripeProductID, account.CreatedAt)
+	if err != nil {
+		log.Println("Erro ao criar account:", err)
+		return err
+	}
+	return nil
+}
+
+func GetAccountByEmail(email string) (*models.Account, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	query := `
+		SELECT id, nome, email, stripe_product_id, created_at
+		FROM obra.account
+		WHERE email = $1
+		LIMIT 1
+	`
+	row := conn.QueryRow(query, email)
+
+	var account models.Account
+	err = row.Scan(&account.ID, &account.Nome, &account.Email, &account.StripeProductID, &account.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // não encontrado
+		}
+		log.Println("Erro ao buscar account:", err)
+		return nil, err
+	}
+	return &account, nil
+}
+
+func UpdateAccountPlan(accountID string, newPlan string) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	query := `
+		UPDATE obra.account
+		SET stripe_product_id = $1
+		WHERE id = $2
+	`
+	_, err = conn.Exec(query, newPlan, accountID)
+	if err != nil {
+		log.Printf("Erro ao atualizar plano do account (%s): %v", accountID, err)
+		return err
+	}
+	return nil
+}

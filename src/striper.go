@@ -23,73 +23,6 @@ type Subscription struct {
 	Status         string
 }
 
-/*
-	func StripeWebhookHandler(c *gin.Context) {
-		const MaxBodyBytes = int64(65536)
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxBodyBytes)
-
-		payload, err := ioutil.ReadAll(c.Request.Body)
-		//payload, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			log.Println("❌ Erro ao ler corpo:", err)
-			c.String(http.StatusRequestEntityTooLarge, "Request too large")
-			return
-		}
-
-		event := stripe.Event{}
-
-		if err := json.Unmarshal(payload, &event); err != nil {
-			fmt.Fprintf(os.Stderr, "⚠️  Webhook error while parsing basic request. %v\n", err.Error())
-			c.Status(http.StatusBadRequest)
-			return
-		}
-
-		endpointSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
-		if endpointSecret == "" {
-			log.Println("❌ STRIPE_WEBHOOK_SECRET não definido")
-			c.String(http.StatusInternalServerError, "Webhook secret ausente")
-			return
-		}
-
-		sigHeader := c.GetHeader("Stripe-Signature")
-		event, err := webhook.ConstructEvent(payload, sigHeader, endpointSecret)
-		if err != nil {
-			log.Println("⚠️  Webhook signature verification failed:", err)
-			c.String(http.StatusBadRequest, "Assinatura inválida")
-			return
-		}
-
-		switch event.Type {
-		case "checkout.session.completed":
-			var session stripe.CheckoutSession
-			if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
-				log.Println("❌ Erro ao decodificar session:", err)
-				c.String(http.StatusBadRequest, "Erro parsing")
-				return
-			}
-
-			sub := models.Subscription{
-				UserID:         0,
-				StripeCustomer: session.Customer.ID, // <- Melhor que CustomerEmail
-				StripeSession:  session.ID,
-				Plan:           session.Metadata["plan"], // Requer que você envie metadata no checkout
-				Status:         "active",
-			}
-
-			if err := pkg.SaveSubscription(sub); err != nil {
-				log.Println("❌ Erro ao salvar assinatura:", err)
-				c.String(http.StatusInternalServerError, "Erro ao salvar")
-				return
-			}
-			log.Println("✅ Assinatura salva com sucesso:", sub)
-
-		default:
-			log.Println("📦 Evento ignorado:", event.Type)
-		}
-
-		c.Status(http.StatusOK)
-	}
-*/
 func HandleWebhook(c *gin.Context) {
 	const MaxBodyBytes = int64(65536)
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, MaxBodyBytes)
@@ -140,6 +73,17 @@ func HandleWebhook(c *gin.Context) {
 			return
 		}
 		log.Println("✅ Assinatura salva com sucesso:", sub)
+
+		customer, err := pkg.GetStripeCustomer(subscription.Customer.ID)
+		if err != nil {
+			log.Fatal("Erro ao consultar cliente:", err)
+		}
+
+		account, err := StartAtivacao(customer.Email, subscription.Items.Data[0].Plan.Product.ID)
+		if err != nil {
+			log.Fatal("Erro na ativação:", err)
+		}
+		log.Println("Conta ativada:", account.ID)
 
 	case "customer.subscription.deleted":
 		var subscription stripe.Subscription
