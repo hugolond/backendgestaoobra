@@ -175,7 +175,7 @@ func CadastraObra(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao validar plano gratuito."})
 			return
 		}
-		if obraCount >= 4 {
+		if obraCount >= 3 {
 			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano Essencial no máximo 3 obras ativas. Faça upgrade para o plano Profissional cadastrar mais."})
 			return
 		}
