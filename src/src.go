@@ -26,6 +26,14 @@ type User struct {
 	AccountID    string `db:"account_id"`
 }
 
+type Account struct {
+	ID              string `db:"id"`
+	Email           string `db:"email"`
+	Status          bool   `db:"status"`
+	StripeProductId string `db:"stripe_product_id"`
+	CreatedAt       string `json:"created_at,omitempty"`
+}
+
 type BodyDelivered struct {
 	OrderId string
 	Status  string
@@ -73,38 +81,6 @@ type Pagamento struct {
 	Observacao    string  `json:"observacao"`
 	CreatedAt     string  `json:"created_at,omitempty"`
 	UpdatedAt     string  `json:"updated_at,omitempty"`
-}
-
-type RcCarrinho struct {
-	Document     string `json:"document"`
-	Email        string `json:"email"`
-	Phone        string `json:"phone"`
-	DocumentType string `json:"documentType"`
-	Checkouttag  struct {
-		DisplayValue string `json:"DisplayValue"`
-		Scores       struct {
-			DadosPessoais []struct {
-				Point float64   `json:"Point"`
-				Date  time.Time `json:"Date"`
-				Until time.Time `json:"Until"`
-			} `json:"DadosPessoais"`
-			Endereco []struct {
-				Point float64   `json:"Point"`
-				Date  time.Time `json:"Date"`
-				Until time.Time `json:"Until"`
-			} `json:"Endereco"`
-			FormaPagamento []struct {
-				Point float64   `json:"Point"`
-				Date  time.Time `json:"Date"`
-				Until time.Time `json:"Until"`
-			} `json:"FormaPagamento"`
-		} `json:"Scores"`
-	} `json:"checkouttag"`
-	CorporateDocument string    `json:"corporateDocument"`
-	Rclastcart        string    `json:"rclastcart"`
-	Rclastcartvalue   string    `json:"rclastcartvalue"`
-	Rclastsession     string    `json:"rclastsession"`
-	Rclastsessiondate time.Time `json:"rclastsessiondate"`
 }
 
 type ObraPagamento struct {

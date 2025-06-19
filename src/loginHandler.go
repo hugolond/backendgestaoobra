@@ -108,9 +108,18 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Verificar status da conta (account)
-	var accountStatus bool
-	sqlAccQuery := `SELECT status FROM obra.account WHERE id = $1`
-	err = db.QueryRow(sqlAccQuery, user.AccountID).Scan(&accountStatus)
+	var account Account
+	sqlAccQuery := `SELECT id, email, created_at, status, stripe_product_id   
+						FROM OBRA.account 
+						WHERE id = $1`
+	err = db.QueryRow(sqlAccQuery, user.AccountID).Scan(
+		&account.ID,
+		&account.Email,
+		&account.CreatedAt,
+		&account.Status,
+		&account.StripeProductId,
+	)
+
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não encontrada"})
 		return
@@ -119,7 +128,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	if !accountStatus {
+	if !account.Status {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Conta inativa! Por favor acionar o Administrador da página"})
 		return
 	}
@@ -140,6 +149,8 @@ func LoginHandler(c *gin.Context) {
 		"account_id": user.AccountID,
 		"exp":        expirationTime.Unix(),
 		"iat":        time.Now().Unix(),
+		"createdat":  account.CreatedAt,
+		"plan":       account.StripeProductId,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -158,6 +169,8 @@ func LoginHandler(c *gin.Context) {
 			"email":      user.Email,
 			"roles":      user.Roles,
 			"account_id": user.AccountID,
+			"createdat":  account.CreatedAt,
+			"plan":       account.StripeProductId,
 		},
 	})
 }
