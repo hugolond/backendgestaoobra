@@ -120,7 +120,6 @@ func CadastraObra(c *gin.Context) {
 	buf.ReadFrom(c.Request.Body)
 	accountID := c.GetString("account_id")
 	plan := c.GetString("plan")
-	createdAtStr := c.GetString("createdat")
 
 	if accountID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
@@ -140,10 +139,20 @@ func CadastraObra(c *gin.Context) {
 	// validador de planos
 	if plan == "free" {
 		// 1. Verificar limite de tempo (30 dias)
+		createdAtStr := c.GetString("createdat")
+		fmt.Println("createdAtStr:", createdAtStr)
+
 		createdAt, err := time.Parse(time.RFC3339, createdAtStr)
-		if err == nil {
-			if time.Since(createdAt).Hours() > 720 { // 30 dias
-				c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano gratuito é válido por 30 dias. Faça upgrade para continuar utilizando."})
+		if err != nil {
+			log.Println("Erro ao converter createdAt:", err)
+		} else {
+			duracao := time.Since(createdAt)
+			fmt.Printf("Duração desde createdAt: %.2f horas\n", duracao.Hours())
+
+			if duracao.Hours() > 720 {
+				c.JSON(http.StatusForbidden, gin.H{
+					"message": "Que pena! O plano gratuito é válido por 30 dias. Faça upgrade para continuar utilizando.",
+				})
 				return
 			}
 		}
