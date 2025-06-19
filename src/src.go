@@ -136,19 +136,15 @@ func CadastraObra(c *gin.Context) {
 		return
 	}
 
-	// validador de planos
+	// validador de planos - FREE
 	if plan == "free" {
 		// 1. Verificar limite de tempo (30 dias)
 		createdAtStr := c.GetString("createdat")
-		fmt.Println("createdAtStr:", createdAtStr)
-
 		createdAt, err := time.Parse(time.RFC3339, createdAtStr)
 		if err != nil {
 			log.Println("Erro ao converter createdAt:", err)
 		} else {
 			duracao := time.Since(createdAt)
-			fmt.Printf("Duração desde createdAt: %.2f horas\n", duracao.Hours())
-
 			if duracao.Hours() > 720 {
 				c.JSON(http.StatusForbidden, gin.H{
 					"message": "Que pena! O plano gratuito é válido por 30 dias. Faça upgrade para continuar utilizando.",
@@ -166,6 +162,21 @@ func CadastraObra(c *gin.Context) {
 		}
 		if obraCount >= 1 {
 			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano gratuito permite apenas uma obra. Faça upgrade para cadastrar mais."})
+			return
+		}
+	}
+
+	// Validador plano Essencial - prod_SOa9Z9JyjIH1vj - 39,90
+	if plan == "prod_SOa9Z9JyjIH1vj" {
+		// 2. Verificar se existe mais de 3 obras ativas
+		obraCount, err := pkg.ContaObrasPorContaAtiva(accountID)
+		if err != nil {
+			log.Println("Erro ao contar obras:", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao validar plano gratuito."})
+			return
+		}
+		if obraCount >= 4 {
+			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano Essencial no máximo 3 obras ativas. Faça upgrade para o plano Profissional cadastrar mais."})
 			return
 		}
 	}
@@ -431,4 +442,24 @@ func GetSubscription(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, dados)
+}
+
+func CancelSubscription(c *gin.Context) {
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+	dados, err := pkg.CancelSubscription(accountID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	response, err := pkg.SendRequetCancelSubscription(dados)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", accountID, "nome", "backendgestaoobra", "Assinatura cancelada: "+response.ID, "")
+	c.JSON(http.StatusOK, gin.H{"message": "Assinatura cancelada com sucesso!"})
 }

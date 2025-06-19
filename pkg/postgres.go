@@ -474,6 +474,25 @@ func ContaObrasPorConta(accountID string) (int, error) {
 
 	return count, nil
 }
+func ContaObrasPorContaAtiva(accountID string) (int, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return 0, fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	var count int
+	sqlStatement := `
+		SELECT COUNT(*) 
+		FROM obra.cadastroobra 
+		WHERE account_id = $1 AND status = true `
+
+	err = conn.QueryRow(sqlStatement, accountID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("erro ao contar obras: %w", err)
+	}
+	return count, nil
+}
 
 func SaveSubscription(sub models.Subscription, email string) error {
 	conn, err := OpenConn()
@@ -542,6 +561,30 @@ func GetSubscription(email string) ([]models.Subscription, error) {
 	return events, nil
 }
 
+func CancelSubscription(accountId string) (string, error) {
+	var subscriptionID string
+	conn, err := OpenConn()
+	if err != nil {
+		return subscriptionID, err
+	}
+	defer conn.Close()
+
+	query := `
+	SELECT s.stripe_subscription
+	FROM obra.subscriptions s
+	JOIN OBRA.account a on a.email = s.email
+	WHERE a.id = $1 AND s.status = 'active'
+	ORDER BY s.created_at DESC
+	LIMIT 1
+	`
+
+	err = conn.QueryRow(query, accountId).Scan(&subscriptionID)
+	if err != nil {
+		return subscriptionID, err
+	}
+	return subscriptionID, nil
+}
+
 func CreateAccount(account models.Account) error {
 	conn, err := OpenConn()
 	if err != nil {
@@ -606,4 +649,34 @@ func UpdateAccountPlan(accountID string, newPlan string) error {
 		return err
 	}
 	return nil
+}
+
+func BuscarAssinaturaAtivaAnterior(email string, productIDCancelado string) (string, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return "", fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	query := `
+		SELECT stripe_product_id
+		FROM obra.subscriptions
+		WHERE email = $1
+			AND status = 'active'
+			AND stripe_product_id != $2
+		ORDER BY created_at DESC
+		LIMIT 1
+	`
+
+	var planoAnterior string
+	err = conn.QueryRow(query, email, productIDCancelado).Scan(&planoAnterior)
+	if err == sql.ErrNoRows {
+		// Não há outro plano ativo
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("erro ao buscar plano anterior: %w", err)
+	}
+
+	return planoAnterior, nil
 }

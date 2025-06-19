@@ -71,6 +71,7 @@ func main() {
 
 		//Assinatura
 		protected.GET("/api/subscriptions", src.GetSubscription)
+		protected.POST("/api/subscriptions/cancel", src.CancelSubscription)
 
 		//Props
 		router.GET("/api/categoria/props", src.ListarProps)

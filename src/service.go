@@ -3,6 +3,8 @@ package src
 import (
 	models "backendgestaoobra/model"
 	"backendgestaoobra/pkg"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,6 +47,35 @@ func StartAtivacao(nome string, email string, stripeProductID string) (*models.A
 	return &newAccount, nil
 }
 
-func CriaAccount() {
+func StartDesativacao(nome string, email string, stripeProductID string) (*models.Account, error) {
+	// 1. Verifica se já existe account com este email
+	existingAccount, err := pkg.GetAccountByEmail(email)
+	if err != nil {
+		return nil, err
+	}
 
+	// verficia o plano atual ativo
+	planoAnterior, err := pkg.BuscarAssinaturaAtivaAnterior(email, stripeProductID)
+	if err != nil {
+		log.Println("Erro:", err)
+	}
+	if planoAnterior == "" {
+		fmt.Println("Não há outro plano ativo anterior")
+		err := pkg.UpdateAccountPlan(existingAccount.ID, "free")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		fmt.Println("Plano anterior ativo:", planoAnterior)
+		err := pkg.UpdateAccountPlan(existingAccount.ID, planoAnterior)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	newAccount, err := pkg.GetAccountByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	return newAccount, nil
 }

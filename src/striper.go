@@ -119,6 +119,12 @@ func HandleWebhook(c *gin.Context) {
 		}
 		log.Println("✅ Cancelamento salvo com sucesso:", sub)
 
+		account, err := StartDesativacao(customer.Name, customer.Email, subscription.Items.Data[0].Plan.Product.ID)
+		if err != nil {
+			log.Fatal("Erro na ativação:", err)
+		}
+		log.Println("Assinatura desativada:", account.ID)
+
 	default:
 		log.Printf("🔔 Evento não tratado: %s", event.Type)
 	}
