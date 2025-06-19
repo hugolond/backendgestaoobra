@@ -143,7 +143,7 @@ func CadastraObra(c *gin.Context) {
 		createdAt, err := time.Parse(time.RFC3339, createdAtStr)
 		if err == nil {
 			if time.Since(createdAt).Hours() > 720 { // 30 dias
-				c.JSON(http.StatusForbidden, gin.H{"error": "Que pena! O plano gratuito é válido por 30 dias. Faça upgrade para continuar utilizando."})
+				c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano gratuito é válido por 30 dias. Faça upgrade para continuar utilizando."})
 				return
 			}
 		}
@@ -156,7 +156,7 @@ func CadastraObra(c *gin.Context) {
 			return
 		}
 		if obraCount >= 1 {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Que pena! O plano gratuito permite apenas uma obra. Faça upgrade para cadastrar mais."})
+			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano gratuito permite apenas uma obra. Faça upgrade para cadastrar mais."})
 			return
 		}
 	}
