@@ -119,6 +119,9 @@ func CadastraObra(c *gin.Context) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(c.Request.Body)
 	accountID := c.GetString("account_id")
+	plan := c.GetString("plan")
+	createdAtStr := c.GetString("createdat")
+
 	if accountID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
 		return
@@ -132,6 +135,30 @@ func CadastraObra(c *gin.Context) {
 	if userName == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificada"})
 		return
+	}
+
+	// validador de planos
+	if plan == "free" {
+		// 1. Verificar limite de tempo (30 dias)
+		createdAt, err := time.Parse(time.RFC3339, createdAtStr)
+		if err == nil {
+			if time.Since(createdAt).Hours() > 720 { // 30 dias
+				c.JSON(http.StatusForbidden, gin.H{"error": "Que pena! O plano gratuito é válido por 30 dias. Faça upgrade para continuar utilizando."})
+				return
+			}
+		}
+
+		// 2. Verificar se já existe uma obra cadastrada
+		obraCount, err := pkg.ContaObrasPorConta(accountID)
+		if err != nil {
+			log.Println("Erro ao contar obras:", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao validar plano gratuito."})
+			return
+		}
+		if obraCount >= 1 {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Que pena! O plano gratuito permite apenas uma obra. Faça upgrade para cadastrar mais."})
+			return
+		}
 	}
 
 	obra := Obra{}

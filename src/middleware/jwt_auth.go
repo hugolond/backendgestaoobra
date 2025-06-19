@@ -56,10 +56,15 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// (Opcional) Extrair outros dados úteis
 
 		email, _ := claims["email"].(string)
+		createdat, _ := claims["createdat"].(string)
+		plan, _ := claims["plan"].(string)
 
 		// Armazenar no contexto
 		c.Set("account_id", accountID)
 		c.Set("email", email)
+
+		c.Set("createdat", createdat)
+		c.Set("plan", plan)
 
 		c.Next()
 	}

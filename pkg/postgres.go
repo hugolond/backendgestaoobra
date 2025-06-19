@@ -454,6 +454,27 @@ func GetObraByID(idObra string, accountID string) (Obra, error) {
 	return u, nil
 }
 
+func ContaObrasPorConta(accountID string) (int, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return 0, fmt.Errorf("erro ao abrir conexão: %w", err)
+	}
+	defer conn.Close()
+
+	var count int
+	sqlStatement := `
+		SELECT COUNT(*) 
+		FROM obra.cadastroobra 
+		WHERE account_id = $1`
+
+	err = conn.QueryRow(sqlStatement, accountID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("erro ao contar obras: %w", err)
+	}
+
+	return count, nil
+}
+
 func SaveSubscription(sub models.Subscription, email string) error {
 	conn, err := OpenConn()
 	if err != nil {
