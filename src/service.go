@@ -45,11 +45,13 @@ func StartAtivacao(nome string, email string, stripeProductID string) (*models.A
 	}
 
 	// Verifica se possui um plano inferior ativo e desativa
+	fmt.Println("Consulta plano anterior ")
 	planoAnterior, err := pkg.BuscarAssinaturaAtiva(email)
 	if err != nil {
 		log.Println("Erro:", err)
 	}
 	if planoAnterior != "" {
+		fmt.Println("Plano anterior ativo encontrado:", planoAnterior)
 		_, err := pkg.CancelSubscription(planoAnterior)
 		if err != nil {
 			return nil, err
