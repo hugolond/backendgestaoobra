@@ -33,7 +33,7 @@ func StartAtivacao(nome string, email string, stripeProductID string) (*models.A
 		}
 		if planoAnterior != "" {
 			fmt.Println("Plano anterior ativo encontrado:", planoAnterior)
-			_, err := pkg.CancelSubscription(planoAnterior)
+			_, err := pkg.SendRequetCancelSubscription(planoAnterior)
 			if err != nil {
 				log.Println("Erro ao chamar cancelamento da assinatura:", err)
 				return nil, err
