@@ -681,7 +681,7 @@ func BuscarAssinaturaAtivaAnterior(email string, productIDCancelado string) (str
 	return planoAnterior, nil
 }
 
-func BuscarAssinaturaAtiva(email string) (string, error) {
+func BuscarAssinaturaAtiva(email string, productIDCancelado string) (string, error) {
 	conn, err := OpenConn()
 	if err != nil {
 		return "", fmt.Errorf("erro ao abrir conexão: %w", err)
@@ -693,12 +693,13 @@ func BuscarAssinaturaAtiva(email string) (string, error) {
 		FROM obra.subscriptions
 		WHERE email = $1
 			AND status = 'active'
+			AND stripe_product_id != $2
 		ORDER BY created_at DESC
 		LIMIT 1
 	`
 
 	var planoAnterior string
-	err = conn.QueryRow(query, email).Scan(&planoAnterior)
+	err = conn.QueryRow(query, email, productIDCancelado).Scan(&planoAnterior)
 	if err == sql.ErrNoRows {
 		// Não há outro plano ativo
 		return "", nil
