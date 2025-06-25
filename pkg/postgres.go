@@ -351,7 +351,7 @@ func UpdateObra(obra Obra, accountID string, userID string, userName string) err
 			bairro = $3,
 			area = $4,
 			tipo = $5,
-			previsto = &6,
+			previsto = $6,
 			casagerminada = $7,
 			status = $8,
 			data_inicio_obra = $9,
@@ -359,7 +359,7 @@ func UpdateObra(obra Obra, accountID string, userID string, userName string) err
 			updated_at = now(), 
 			userid_at = $11,
 			username_at = $12
-		WHERE idObra = $13 AND account_id = $14`
+		WHERE idobra = $13 AND account_id = $14`
 
 	_, err = conn.Exec(sqlStatement,
 		obra.Nome,
