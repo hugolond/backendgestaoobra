@@ -533,12 +533,18 @@ func GetSubscription(email string) ([]models.Subscription, error) {
 
 	query := `
 	SELECT s.stripe_customer, s.stripe_subscription, s.stripe_product_id,
-		   s.stripe_price_id, s.stripe_plan_amount, s.currency,
-		   s.interval, s.interval_count, s.status, s.created_at
-	FROM obra.subscriptions s
-	JOIN OBRA.account a on a.email = s.email
-	WHERE a.id = $1
-	ORDER BY s.created_at DESC
+       s.stripe_price_id, s.stripe_plan_amount, s.currency,
+       s.interval, s.interval_count, s.status, s.created_at
+		FROM obra.subscriptions s
+		JOIN obra.account a ON a.email = s.email
+		INNER JOIN (
+		    SELECT stripe_subscription, MAX(created_at) AS max_created_at
+		    FROM obra.subscriptions
+		    GROUP BY stripe_subscription
+		) latest ON s.stripe_subscription = latest.stripe_subscription AND s.created_at = latest.max_created_at
+		WHERE a.id = $1
+		  AND s.status != 'canceled'
+		ORDER BY s.created_at DESC;
 	`
 
 	rows, err := conn.Query(query, email)
