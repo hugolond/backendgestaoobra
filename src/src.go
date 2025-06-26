@@ -245,6 +245,9 @@ func ListObra(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
 		return
 	}
+
+	status := c.Query("status") // <-- parâmetro opcional de filtro
+
 	currentTime := time.Now()
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra")
 
@@ -253,6 +256,27 @@ func ListObra(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar dados da obra"})
 		fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | CA - Consulta lista de obra - Error:" + err.Error())
 		return
+	}
+
+	// Filtra por status se informado
+	if status != "" {
+		var esperado bool
+		if status == "ativo" {
+			esperado = true
+		} else if status == "inativo" {
+			esperado = false
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Status inválido. Use 'ativo' ou 'inativo'"})
+			return
+		}
+
+		filtrados := make([]pkg.Obra, 0)
+		for _, o := range dados {
+			if o.Status == esperado {
+				filtrados = append(filtrados, o)
+			}
+		}
+		dados = filtrados
 	}
 
 	pkg.InsertLog(
