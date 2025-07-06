@@ -161,7 +161,7 @@ func CadastraObra(c *gin.Context) {
 			return
 		}
 		if obraCount >= 1 {
-			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano gratuito permite apenas uma obra. Faça upgrade para cadastrar mais."})
+			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano gratuito permite apenas uma obra. Faça upgrade para o plano ESSENCIAL cadastrar mais obras."})
 			return
 		}
 	}
@@ -176,7 +176,7 @@ func CadastraObra(c *gin.Context) {
 			return
 		}
 		if obraCount >= 3 {
-			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano Essencial no máximo 3 obras ativas. Faça upgrade para o plano Profissional cadastrar mais."})
+			c.JSON(http.StatusForbidden, gin.H{"message": "Que pena! O plano Essencial permite no máximo 3 obras ativas. Faça upgrade para o plano PROFISSIONAL para cadastrar mais obras."})
 			return
 		}
 	}
