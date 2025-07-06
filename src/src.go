@@ -166,8 +166,8 @@ func CadastraObra(c *gin.Context) {
 		}
 	}
 
-	// Validador plano Essencial - prod_SOa9Z9JyjIH1vj - 39,90
-	if plan == "prod_SOa9Z9JyjIH1vj" {
+	// Validador plano Essencial - prod_Sd9wZSP4KMB0fx - 39,90
+	if plan == "prod_Sd9wZSP4KMB0fx" {
 		// 2. Verificar se existe mais de 3 obras ativas
 		obraCount, err := pkg.ContaObrasPorContaAtiva(accountID)
 		if err != nil {
