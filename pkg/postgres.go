@@ -752,3 +752,18 @@ func GetAdminDashboardMetrics() (map[string]int, error) {
 
 	return metrics, nil
 }
+
+func RegisterAccessLog(accountID string, email, ipAddress, userAgent string) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	query := `
+		INSERT INTO obra.access_log (account_id, email, ip_address, user_agent)
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err = conn.Exec(query, accountID, email, ipAddress, userAgent)
+	return err
+}

@@ -8,8 +8,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -159,8 +162,17 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao gerar token"})
 		return
 	}
-
 	fmt.Println("[GIN] " + currentTime.Format("2006/01/02 - 15:04:05") + " | A1 - Auth Login - User: " + user.Username + " Status 200 OK!")
+
+	// Exemplo dentro do login handler
+	ip := GetIPAddress(c)
+	userAgent := c.GetHeader("User-Agent")
+
+	err = pkg.RegisterAccessLog(user.AccountID, user.Email, ip, userAgent)
+	if err != nil {
+		log.Printf("Erro ao registrar acesso: %v", err)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"token": tokenString,
 		"user": gin.H{
@@ -399,4 +411,29 @@ func ResetPassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Senha redefinida com sucesso."})
+}
+
+func GetIPAddress(c *gin.Context) string {
+	// Primeiro tenta pegar o IP do cabeçalho X-Forwarded-For (usado por proxies e balanceadores)
+	ip := c.GetHeader("X-Forwarded-For")
+	if ip != "" {
+		// Pode conter múltiplos IPs separados por vírgula. Pegamos o primeiro.
+		ipList := strings.Split(ip, ",")
+		if len(ipList) > 0 {
+			return strings.TrimSpace(ipList[0])
+		}
+	}
+
+	// Em seguida tenta X-Real-IP
+	ip = c.GetHeader("X-Real-IP")
+	if ip != "" {
+		return ip
+	}
+
+	// Fallback para o IP direto da conexão
+	ip, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+	if err != nil {
+		return c.Request.RemoteAddr // Como fallback bruto
+	}
+	return ip
 }
