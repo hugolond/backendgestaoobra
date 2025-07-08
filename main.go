@@ -78,6 +78,7 @@ func main() {
 
 		//Admin
 		protected.GET("/admin/dashboard", src.GetAdminDashboard)
+		protected.GET("/admin/logins-por-dia", src.GetLoginsPorDia)
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
