@@ -487,3 +487,17 @@ func CancelSubscription(c *gin.Context) {
 	pkg.InsertLog(time.Now().Format("2006-01-02 15:04:05"), "OBRA", accountID, "nome", "backendgestaoobra", "Assinatura cancelada: "+response.ID, "")
 	c.JSON(http.StatusOK, gin.H{"message": "Assinatura cancelada com sucesso!"})
 }
+
+func GetAdminDashboard(c *gin.Context) {
+	role := c.GetString("role")
+	if role == "{admin}" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta sem acesso"})
+		return
+	}
+	dados, err := pkg.GetAdminDashboardMetrics()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, dados)
+}

@@ -716,3 +716,39 @@ func BuscarAssinaturaAtiva(email string, productIDCancelado string) (string, err
 
 	return planoAnterior, nil
 }
+
+func GetAdminDashboardMetrics() (map[string]int, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	query := `
+	SELECT 
+		(SELECT COUNT(*) FROM obra.account) AS total_usuarios,
+		(SELECT COUNT(*) FROM obra.account where stripe_product_id = 'free' ) AS total_usuarios_free,
+		(SELECT COUNT(*) FROM obra.account where stripe_product_id <> 'free' ) AS total_usuarios_pagos,
+		(SELECT COUNT(*) FROM obra.cadastroobra) AS total_obras,
+		(SELECT COUNT(*) FROM obra.cadastroobra WHERE status = true) AS obras_ativas,
+		(SELECT COUNT(*) FROM obra.pagamento) AS total_pagamentos;
+	`
+
+	var totalUsuarios, totalUsariosFree, totalUsuariosPago, totalObras, obrasAtivas, totalPagamentos int
+
+	err = conn.QueryRow(query).Scan(&totalUsuarios, &totalUsariosFree, &totalUsuariosPago, &totalObras, &obrasAtivas, &totalPagamentos)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics := map[string]int{
+		"total_usuarios":      totalUsuarios,
+		"total_usuarios_free": totalUsariosFree,
+		"total_usuarios_pago": totalUsuariosPago,
+		"total_obras":         totalObras,
+		"obras_ativas":        obrasAtivas,
+		"total_pagamentos":    totalPagamentos,
+	}
+
+	return metrics, nil
+}

@@ -74,8 +74,10 @@ func main() {
 		protected.POST("/api/subscriptions/cancel", src.CancelSubscription)
 
 		//Props
-		router.GET("/api/categoria/props", src.ListarProps)
+		protected.GET("/api/categoria/props", src.ListarProps)
 
+		//Admin
+		protected.GET("/admin/dashboard", src.GetAdminDashboard)
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
