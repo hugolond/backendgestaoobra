@@ -56,6 +56,10 @@ type Pagamento struct {
 	CreatedAt     string  `json:"created_at,omitempty"`
 	UpdatedAt     string  `json:"updated_at,omitempty"`
 }
+type LoginDia struct {
+	Dia   string `json:"dia"`
+	Total int    `json:"total"`
+}
 
 func OpenConn() (*sql.DB, error) {
 	err := godotenv.Load(".env")
@@ -766,4 +770,41 @@ func RegisterAccessLog(accountID string, email, ipAddress, userAgent string) err
 	`
 	_, err = conn.Exec(query, accountID, email, ipAddress, userAgent)
 	return err
+}
+
+func GetLoginsPorDia() ([]LoginDia, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	query := `
+		SELECT 
+			DATE(login_at) AS dia,
+			COUNT(*) AS total
+		FROM obra.access_log
+		GROUP BY dia
+		ORDER BY dia DESC
+		LIMIT 30
+	`
+
+	rows, err := conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []LoginDia
+
+	for rows.Next() {
+		var r LoginDia
+		if err := rows.Scan(&r.Dia, &r.Total); err != nil {
+
+			return nil, err
+		}
+		result = append(result, r)
+	}
+
+	return result, nil
 }
