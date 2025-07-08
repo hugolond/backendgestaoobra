@@ -489,8 +489,8 @@ func CancelSubscription(c *gin.Context) {
 }
 
 func GetAdminDashboard(c *gin.Context) {
-	role := c.GetString("role")
-	if role == "{admin}" {
+	id := c.GetString("id")
+	if id != "ba1d45cf-db1f-443e-a2c1-a3972cd17cb5" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta sem acesso"})
 		return
 	}
