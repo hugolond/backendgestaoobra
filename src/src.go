@@ -515,3 +515,17 @@ func GetLoginsPorDia(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, dados)
 }
+
+func GetuserPorDia(c *gin.Context) {
+	id := c.GetString("id")
+	if id != "ba1d45cf-db1f-443e-a2c1-a3972cd17cb5" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta sem acesso"})
+		return
+	}
+	dados, err := pkg.GetUserPorDia()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, dados)
+}

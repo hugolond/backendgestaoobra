@@ -61,6 +61,17 @@ type LoginDia struct {
 	Total int    `json:"total"`
 }
 
+type UsuarioAdmin struct {
+	ID              string `json:"id"`
+	Nome            string `json:"nome"`
+	Email           string `json:"email"`
+	UltimoLogin     string `json:"ultimo_login"`
+	Plano           string `json:"plano"`
+	TotalObras      int    `json:"total_obras"`
+	ObrasAtivas     int    `json:"obras_ativas"`
+	TotalPagamentos int    `json:"total_pagamentos"`
+}
+
 func OpenConn() (*sql.DB, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -807,4 +818,67 @@ func GetLoginsPorDia() ([]LoginDia, error) {
 	}
 
 	return result, nil
+}
+
+func GetUserPorDia() ([]UsuarioAdmin, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	query := `
+	SELECT 
+		a.id,
+		a.nome,
+		a.email,
+		COALESCE((
+			SELECT MAX(login_at)
+			FROM obra.access_log al
+			WHERE al.account_id = a.id
+		), a.created_at) AS ultimo_login,
+		COALESCE(a.stripe_product_id, 'free') AS plano,
+		(
+			SELECT COUNT(*) 
+			FROM obra.cadastroobra co 
+			WHERE co.account_id = a.id
+		) AS total_obras,
+		(
+			SELECT COUNT(*) 
+			FROM obra.cadastroobra co 
+			WHERE co.account_id = a.id AND co.status = true
+		) AS obras_ativas,
+		(
+			SELECT COUNT(*) 
+			FROM obra.pagamento p 
+			WHERE p.account_id = a.id
+		) AS total_pagamentos
+	FROM obra.account a
+	ORDER BY a.nome
+	`
+	rows, err := conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var usuarios []UsuarioAdmin
+
+	for rows.Next() {
+		var u UsuarioAdmin
+		if err := rows.Scan(
+			&u.ID,
+			&u.Nome,
+			&u.Email,
+			&u.UltimoLogin,
+			&u.Plano,
+			&u.TotalObras,
+			&u.ObrasAtivas,
+			&u.TotalPagamentos,
+		); err != nil {
+			return nil, err
+		}
+		usuarios = append(usuarios, u)
+	}
+	return usuarios, nil
 }
