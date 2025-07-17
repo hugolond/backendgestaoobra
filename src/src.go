@@ -489,8 +489,12 @@ func CancelSubscription(c *gin.Context) {
 }
 
 func GetAdminDashboard(c *gin.Context) {
+	idsAutorizados := map[string]bool{
+		"ba1d45cf-db1f-443e-a2c1-a3972cd17cb5": true,
+		"dd1ab462-b034-4840-b95b-5f59d7e8802e": true,
+	}
 	id := c.GetString("id")
-	if id != "ba1d45cf-db1f-443e-a2c1-a3972cd17cb5" {
+	if !idsAutorizados[id] {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta sem acesso"})
 		return
 	}
@@ -503,8 +507,12 @@ func GetAdminDashboard(c *gin.Context) {
 }
 
 func GetLoginsPorDia(c *gin.Context) {
+	idsAutorizados := map[string]bool{
+		"ba1d45cf-db1f-443e-a2c1-a3972cd17cb5": true,
+		"dd1ab462-b034-4840-b95b-5f59d7e8802e": true,
+	}
 	id := c.GetString("id")
-	if id != "ba1d45cf-db1f-443e-a2c1-a3972cd17cb5" {
+	if !idsAutorizados[id] {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta sem acesso"})
 		return
 	}
@@ -517,8 +525,12 @@ func GetLoginsPorDia(c *gin.Context) {
 }
 
 func GetuserPorDia(c *gin.Context) {
+	idsAutorizados := map[string]bool{
+		"ba1d45cf-db1f-443e-a2c1-a3972cd17cb5": true,
+		"dd1ab462-b034-4840-b95b-5f59d7e8802e": true,
+	}
 	id := c.GetString("id")
-	if id != "ba1d45cf-db1f-443e-a2c1-a3972cd17cb5" {
+	if !idsAutorizados[id] {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta sem acesso"})
 		return
 	}
