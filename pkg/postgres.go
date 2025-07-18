@@ -159,7 +159,7 @@ func SelectObraPagamentoJoin(accountID string) ([]ObraPagamento, error) {
 			COALESCE(p.categoria, '')
 			FROM obra.cadastroobra o
 			INNER JOIN obra.pagamento p ON p.idObra = o.idObra AND p.account_id = $1
-			ORDER BY o.nome, p.data_do_pagamento DESC;
+			ORDER BY p.id DESC;
 	`
 
 	rows, err := conn.Query(query, accountID)
