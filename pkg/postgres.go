@@ -3,6 +3,7 @@ package pkg
 import (
 	models "backendgestaoobra/model"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -30,6 +31,16 @@ type ObraPagamento struct {
 	Categoria     string  `json:"categoria"`
 }
 
+type VendaInfo struct {
+	ID             string  `json:"ID"`
+	DataVenda      string  `json:"DataVenda"` // ISO (string) para facilitar no front
+	ValorVenda     float64 `json:"ValorVenda"`
+	CPFComprador   string  `json:"CPFComprador"`
+	FormaPagamento string  `json:"FormaPagamento"` // avista|financiamento|consorcio|outro
+	Descricao      string  `json:"Descricao,omitempty"`
+	NomeComprador  string  `json:"NomeComprador"`
+}
+
 type Obra struct {
 	ID             string // Usado apenas se quiser armazenar o retorno
 	Nome           string
@@ -44,6 +55,8 @@ type Obra struct {
 	DataFinalObra  string // idem
 	CreatedAt      string
 	UpdatedAt      string
+	Vendida        bool       `json:"Vendida"`
+	VendaInfo      *VendaInfo `json:"VendaInfo,omitempty"`
 }
 
 type Pagamento struct {
@@ -266,11 +279,49 @@ func GetAllObra(accountID string) ([]Obra, error) {
 	}
 	defer conn.Close()
 
+	// Pega a venda mais recente (se existir) para cada obra
 	sqlStatement := `
-		SELECT idObra, nome, endereco, bairro, area, tipo, COALESCE(previsto, 0), casagerminada, status, data_inicio_obra, data_final_obra, created_at, updated_at
-		FROM obra.cadastroobra
-		WHERE account_id = $1
-		ORDER BY data_inicio_obra DESC`
+		SELECT 
+			o.idObra,
+			o.nome,
+			o.endereco,
+			o.bairro,
+			o.area,
+			o.tipo,
+			COALESCE(o.previsto, 0)                          AS previsto,
+			o.casagerminada,
+			o.status,
+			o.data_inicio_obra,
+			o.data_final_obra,
+			o.created_at,
+			o.updated_at,
+
+			-- Vendida?
+			CASE WHEN v.id IS NOT NULL THEN TRUE ELSE FALSE END AS vendida,
+
+			-- Dados da venda (JSON) — formata DataVenda em ISO-UTC (Z)
+			CASE WHEN v.id IS NOT NULL THEN
+				jsonb_build_object(
+					'ID',             v.id,
+					'DataVenda',      to_char(v.data_venda AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+					'ValorVenda',     v.valor_venda,
+					'CPFComprador',   v.cpf_comprador,
+					'FormaPagamento', v.forma_pagamento,
+					'Descricao',      v.descricao,
+					'NomeComprador',  v.nome_comprador
+				)
+			ELSE NULL END AS venda_info
+		FROM obra.cadastroobra o
+		LEFT JOIN LATERAL (
+			SELECT vv.*
+			  FROM obra.venda vv
+			 WHERE vv.idObra = o.idObra
+			 ORDER BY vv.created_at DESC
+			 LIMIT 1
+		) v ON TRUE
+		WHERE o.account_id = $1
+		ORDER BY o.data_inicio_obra DESC
+	`
 
 	rows, err := conn.Query(sqlStatement, accountID)
 	if err != nil {
@@ -281,6 +332,9 @@ func GetAllObra(accountID string) ([]Obra, error) {
 	var obras []Obra
 	for rows.Next() {
 		var u Obra
+		var vendaJSON sql.NullString
+		var vendida bool
+
 		err := rows.Scan(
 			&u.ID,
 			&u.Nome,
@@ -295,10 +349,22 @@ func GetAllObra(accountID string) ([]Obra, error) {
 			&u.DataFinalObra,
 			&u.CreatedAt,
 			&u.UpdatedAt,
+			&vendida,
+			&vendaJSON,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("erro ao ler linha: %w", err)
 		}
+
+		u.Vendida = vendida
+		if vendaJSON.Valid && vendaJSON.String != "" {
+			var info VendaInfo
+			if err := json.Unmarshal([]byte(vendaJSON.String), &info); err == nil {
+				u.VendaInfo = &info
+				u.Vendida = true // garante consistência
+			}
+		}
+
 		obras = append(obras, u)
 	}
 
