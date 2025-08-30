@@ -80,6 +80,12 @@ func main() {
 		protected.GET("/admin/dashboard", src.GetAdminDashboard)
 		protected.GET("/admin/logins-por-dia", src.GetLoginsPorDia)
 		protected.GET("/admin/users", src.GetuserPorDia)
+
+		// Venda (sold)
+		protected.POST("/api/sold/v1/create", src.CadastraVenda)
+		protected.PUT("/api/sold/v1/update", src.AtualizaVenda)
+		protected.GET("/api/sold/v1/by-obra/:obraId", src.BuscaVendaPorObra)
+		protected.DELETE("/api/sold/v1/:id", src.DeletaVenda)
 	}
 	port := os.Getenv("PORT")
 	if port == "" {

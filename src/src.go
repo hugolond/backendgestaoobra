@@ -488,6 +488,155 @@ func CancelSubscription(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Assinatura cancelada com sucesso!"})
 }
 
+func CadastraVenda(c *gin.Context) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(c.Request.Body)
+
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+	userID := c.GetString("id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificado"})
+		return
+	}
+	userName := c.GetString("username")
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificado"})
+		return
+	}
+
+	v := pkg.Venda{}
+	if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
+		log.Println("Erro ao decodificar venda:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Erro ao processar venda"})
+		return
+	}
+
+	// aceitar ObraID (frontend) ou IDObra (backend)
+	if v.IDObra == "" && v.ObraID != "" {
+		v.IDObra = v.ObraID
+	}
+
+	if v.IDObra == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID da obra é obrigatório"})
+		return
+	}
+	// validações simples
+	if len(v.CPFComprador) != 11 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "CPF inválido (use 11 dígitos)"})
+		return
+	}
+	if v.NomeComprador == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Nome do comprador é obrigatório"})
+		return
+	}
+	if v.ValorVenda <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Valor da venda deve ser maior que zero"})
+		return
+	}
+	// DataVenda deve vir como RFC3339 ou já como time.Time no JSON; se necessário, parseie aqui.
+
+	currentTime := time.Now()
+	fmt.Println("[GIN] " + currentTime.Format("2006-01-02 - 15:04:05") + " | SOLD - Insert venda da obra: " + v.IDObra)
+
+	if err := pkg.InsertVendaStruct(v, accountID, userID, userName); err != nil {
+		log.Println("Erro ao inserir venda:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao registrar venda"})
+		return
+	}
+
+	pkg.InsertLog(currentTime.Format("2006-01-02 15:04:05"), "VENDA", v.IDObra, "idObra", "backendgestaoobra", "Venda registrada com sucesso!", "")
+	c.JSON(http.StatusOK, gin.H{"message": "Venda cadastrada com sucesso!"})
+}
+
+func AtualizaVenda(c *gin.Context) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(c.Request.Body)
+
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+	userID := c.GetString("id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificado"})
+		return
+	}
+	userName := c.GetString("username")
+	if userName == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário não identificado"})
+		return
+	}
+
+	v := pkg.Venda{}
+	if err := json.Unmarshal(buf.Bytes(), &v); err != nil {
+		log.Println("Erro ao decodificar venda:", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Erro ao processar venda"})
+		return
+	}
+	if v.ID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID da venda é obrigatório"})
+		return
+	}
+	if v.IDObra == "" && v.ObraID != "" {
+		v.IDObra = v.ObraID
+	}
+	if v.IDObra == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID da obra é obrigatório"})
+		return
+	}
+
+	if err := pkg.UpdateVendaStruct(v, accountID, userID, userName); err != nil {
+		log.Println("Erro ao atualizar venda:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao atualizar venda"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Venda atualizada com sucesso!"})
+}
+
+func BuscaVendaPorObra(c *gin.Context) {
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+
+	obraID := c.Param("obraId")
+	v, err := pkg.GetVendaByObraID(obraID)
+	if err != nil {
+		log.Println("Erro ao buscar venda:", err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"message": "Venda não encontrada"})
+		return
+	}
+	c.JSON(http.StatusOK, v)
+}
+
+func DeletaVenda(c *gin.Context) {
+	accountID := c.GetString("account_id")
+	if accountID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Conta não identificada"})
+		return
+	}
+
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID da venda é obrigatório"})
+		return
+	}
+
+	if err := pkg.DeleteVendaByID(id); err != nil {
+		log.Println("Erro ao excluir venda:", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Erro ao excluir venda"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Venda removida com sucesso!"})
+}
+
+// / User admin
 func GetAdminDashboard(c *gin.Context) {
 	idsAutorizados := map[string]bool{
 		"ba1d45cf-db1f-443e-a2c1-a3972cd17cb5": true,

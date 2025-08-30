@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -70,6 +71,45 @@ type UsuarioAdmin struct {
 	TotalObras      int    `json:"total_obras"`
 	ObrasAtivas     int    `json:"obras_ativas"`
 	TotalPagamentos int    `json:"total_pagamentos"`
+}
+
+type Venda struct {
+	ID             string    `json:"ID"`
+	IDObra         string    `json:"IDObra"` // padrão interno
+	ObraID         string    `json:"ObraID"` // alias aceito no JSON (frontend)
+	NomeComprador  string    `json:"NomeComprador"`
+	CPFComprador   string    `json:"CPFComprador"` // apenas dígitos
+	ValorVenda     float64   `json:"ValorVenda"`
+	FormaPagamento string    `json:"FormaPagamento"` // avista|financiamento|consorcio|outro
+	Descricao      string    `json:"Descricao"`
+	DataVenda      time.Time `json:"DataVenda"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+
+	AccountID string `json:"-"`
+	UserID    string `json:"-"`
+	UserName  string `json:"-"`
+}
+
+type CreateSoldReq struct {
+	ObraID         string  `json:"ObraID" binding:"required,uuid"`
+	NomeComprador  string  `json:"NomeComprador" binding:"required"`
+	CPFComprador   string  `json:"CPFComprador" binding:"required,len=11"` // só dígitos
+	ValorVenda     float64 `json:"ValorVenda" binding:"required,gte=0"`
+	FormaPagamento string  `json:"FormaPagamento" binding:"required,oneof=avista financiamento consorcio outro"`
+	Descricao      string  `json:"Descricao"`
+	DataVenda      string  `json:"DataVenda" binding:"required"` // ISO
+}
+
+type UpdateSoldReq struct {
+	ID             string  `json:"ID" binding:"required,uuid"`
+	ObraID         string  `json:"ObraID" binding:"required,uuid"`
+	NomeComprador  string  `json:"NomeComprador" binding:"required"`
+	CPFComprador   string  `json:"CPFComprador" binding:"required,len=11"`
+	ValorVenda     float64 `json:"ValorVenda" binding:"required,gte=0"`
+	FormaPagamento string  `json:"FormaPagamento" binding:"required,oneof=avista financiamento consorcio outro"`
+	Descricao      string  `json:"Descricao"`
+	DataVenda      string  `json:"DataVenda" binding:"required"`
 }
 
 func OpenConn() (*sql.DB, error) {
@@ -292,6 +332,160 @@ func InsertPagamentoStruct(p Pagamento, accountID string, userID string, userNam
 	)
 
 	return err
+}
+
+func InsertVendaStruct(v Venda, accountID, userID, userName string) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		INSERT INTO obra.venda (
+			idObra, data_venda, nome_comprador, cpf_comprador, valor_venda, forma_pagamento, descricao,
+			created_at, updated_at, account_id, userid_at, username_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7,
+			now(), now(), $8, $9, $10
+		)
+	`
+
+	_, err = conn.Exec(sqlStatement,
+		v.IDObra,
+		v.DataVenda,
+		v.NomeComprador,
+		v.CPFComprador,
+		v.ValorVenda,
+		v.FormaPagamento,
+		NullIfEmpty(v.Descricao),
+		accountID,
+		userID,
+		userName,
+	)
+	return err
+}
+
+func UpdateVendaStruct(v Venda, accountID, userID, userName string) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	sqlStatement := `
+		UPDATE obra.venda
+		   SET data_venda = $1,
+		       nome_comprador = $2,
+		       cpf_comprador = $3,
+		       valor_venda = $4,
+		       forma_pagamento = $5,
+		       descricao = $6,
+		       updated_at = now(),
+		       account_id = $7,
+		       userid_at  = $8,
+		       username_at= $9
+		 WHERE id = $10 AND idObra = $11
+	`
+	_, err = conn.Exec(sqlStatement,
+		v.DataVenda,
+		v.NomeComprador,
+		v.CPFComprador,
+		v.ValorVenda,
+		v.FormaPagamento,
+		NullIfEmpty(v.Descricao),
+		accountID,
+		userID,
+		userName,
+		v.ID,
+		v.IDObra,
+	)
+	return err
+}
+
+func DeleteVendaByID(id string) error {
+	conn, err := OpenConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	_, err = conn.Exec(`DELETE FROM obra.venda WHERE id=$1`, id)
+	return err
+}
+
+func GetVendaByID(id string) (*Venda, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	row := conn.QueryRow(`
+		SELECT id, idObra, nome_comprador, cpf_comprador, valor_venda,
+		       forma_pagamento, descricao, data_venda, created_at, updated_at,
+		       account_id, userid_at, username_at
+		  FROM obra.venda
+		 WHERE id=$1
+	`, id)
+
+	var v Venda
+	var desc sql.NullString
+	err = row.Scan(
+		&v.ID, &v.IDObra, &v.NomeComprador, &v.CPFComprador, &v.ValorVenda,
+		&v.FormaPagamento, &desc, &v.DataVenda, &v.CreatedAt, &v.UpdatedAt,
+		&v.AccountID, &v.UserID, &v.UserName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	v.Descricao = IfNullString(desc)
+	return &v, nil
+}
+
+func GetVendaByObraID(obraID string) (*Venda, error) {
+	conn, err := OpenConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	row := conn.QueryRow(`
+		SELECT id, idObra, nome_comprador, cpf_comprador, valor_venda,
+		       forma_pagamento, descricao, data_venda, created_at, updated_at,
+		       account_id, userid_at, username_at
+		  FROM obra.venda
+		 WHERE idObra=$1
+		 ORDER BY created_at DESC
+		 LIMIT 1
+	`, obraID)
+
+	var v Venda
+	var desc sql.NullString
+	err = row.Scan(
+		&v.ID, &v.IDObra, &v.NomeComprador, &v.CPFComprador, &v.ValorVenda,
+		&v.FormaPagamento, &desc, &v.DataVenda, &v.CreatedAt, &v.UpdatedAt,
+		&v.AccountID, &v.UserID, &v.UserName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	v.Descricao = IfNullString(desc)
+	return &v, nil
+}
+
+// Helpers para campos opcionais
+func NullIfEmpty(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+func IfNullString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
 }
 
 func GetAllPagamentoByObra(idObra string, accountID string) ([]Pagamento, error) {
