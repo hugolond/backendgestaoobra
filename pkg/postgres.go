@@ -1114,7 +1114,7 @@ func GetUserPorDia() ([]UsuarioAdmin, error) {
 			WHERE p.account_id = a.id
 		) AS total_pagamentos
 	FROM obra.account a
-	ORDER BY a.nome
+	ORDER BY ultimo_login desc
 	`
 	rows, err := conn.Query(query)
 	if err != nil {
